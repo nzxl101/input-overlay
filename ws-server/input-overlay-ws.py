@@ -154,18 +154,20 @@ class InputOverlayServer:
     def is_allowed(self, code: int, is_mouse: bool = False, is_scroll: bool = False) -> bool:
         if not self.key_whitelist:
             return True
-        
+
         name = None
         if is_scroll:
             name = MOUSE_SCROLL_NAMES.get(code)
+            if "mouse_wheel" in self.key_whitelist:
+                return True
         elif is_mouse:
             name = MOUSE_BUTTON_NAMES.get(code)
         else:
             name = RAW_CODE_TO_KEY_NAME.get(code)
-            
+
         if name and name in self.key_whitelist:
             return True
-            
+
         return False
 
     async def broadcast(self, message: dict):
@@ -219,8 +221,6 @@ class InputOverlayServer:
         rawcode = get_rawcode(key)
         if rawcode and self.is_allowed(rawcode):
             self.queue_message({"event_type": "key_released", "rawcode": rawcode})
-            if self.analog_buffer.pop(rawcode, None) is not None:
-                self.queue_message({"event_type": "analog_depth", "rawcode": rawcode, "depth": 0.0})
 
     def on_mouse_click(self, x, y, button, pressed):
         button_code = MOUSE_BUTTON_MAP.get(button, 0)
