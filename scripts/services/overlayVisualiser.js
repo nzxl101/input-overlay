@@ -14,6 +14,11 @@ export class OverlayVisualiser {
         this.Z_INDEX_COUNTER = 100;
 
         this.analogMode = false;
+
+        this.analogTargetDepths = {};
+        this.analogCurrentDepths = {};
+        this.analogRafId = null;
+        this._analogRafLoop = this._analogRafLoop.bind(this);
     }
 
     updateElementState(el, keyName, isActive, activeSet) {
@@ -28,6 +33,10 @@ export class OverlayVisualiser {
 
                 if (this.analogMode && keyName.startsWith("key_")) {
                     el.classList.add("analog-key");
+                    if (this.keyLegendMode === "inverting") {
+                        const primaryLabel = el.querySelector('.key-label-primary');
+                        if (primaryLabel) primaryLabel.style.setProperty('color', this.inactiveColor, 'important');
+                    }
                 } else {
                     const animDur = this.animDuration || '0.15s';
                     el.style.setProperty('transition', `all ${animDur} cubic-bezier(0.4,0,0.2,1)`, 'important');
@@ -49,7 +58,11 @@ export class OverlayVisualiser {
                 el.style.setProperty('transform', 'scale(1)', 'important');
                 const primaryLabel = el.querySelector('.key-label-primary');
                 if (primaryLabel) {
-                    primaryLabel.style.color = '';
+                    primaryLabel.style.removeProperty('color');
+                }
+                const invertedLabel = el.querySelector('.key-label-inverted');
+                if (invertedLabel) {
+                    invertedLabel.style.clipPath = 'inset(100% 0 0 0)';
                 }
             } else {
                 const animDur = this.animDuration || '0.15s';
@@ -83,6 +96,9 @@ export class OverlayVisualiser {
         this.fontColor = opts.fontcolor;
         this.outlineScalePressed = parseFloat(opts.outlinescalepressed ?? opts.outlineScalePressed ?? 1);
         this.outlineScaleUnpressed = parseFloat(opts.outlinescaleunpressed ?? opts.outlineScaleUnpressed ?? 1);
+
+        this.keyLegendMode = opts.keylegendmode || "fading";
+        this.forceDisableAnalog = opts.forcedisableanalog === true || opts.forcedisableanalog === "true" || opts.forcedisableanalog === "1";
 
         this.utils.applyFontStyles(opts.fontfamily);
 
@@ -130,7 +146,6 @@ export class OverlayVisualiser {
                 right: 0;
                 height: 0%;
                 background: ${opts.activebgcolor};
-                transition: height 0.05s cubic-bezier(0.4,0,0.2,1);
                 z-index: -1;
                 pointer-events: none;
             }
@@ -147,6 +162,17 @@ export class OverlayVisualiser {
                 justify-content: center;
                 width: 100%;
                 height: 100%;
+            }
+            .key-label-inverted {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: absolute;
+                inset: 0;
+                color: ${opts.fontcolor} !important;
+                clip-path: inset(100% 0 0 0);
+                pointer-events: none;
+                z-index: 3;
             }
             .key.active, .mouse-btn.active, .scroll-display.active {
                 color: ${opts.fontcolor} !important;
@@ -233,6 +259,11 @@ export class OverlayVisualiser {
             primaryLabel.className = "key-label-primary";
             primaryLabel.innerHTML = elementDef.label;
             el.appendChild(primaryLabel);
+
+            const invertedLabel = document.createElement("span");
+            invertedLabel.className = "key-label-inverted";
+            invertedLabel.innerHTML = elementDef.label;
+            el.appendChild(invertedLabel);
         }
 
         return el;
@@ -560,5 +591,128 @@ export class OverlayVisualiser {
                 }
             });
         }, 250);
+    }
+
+    lerpColor(hexA, hexB, t) {
+        const parse = (hex) => {
+            if (!hex) return [128, 128, 128];
+            const h = hex.replace('#', '');
+            const full = h.length === 3
+                ? h.split('').map(c => parseInt(c + c, 16))
+                : [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+            return full;
+        };
+        const a = parse(hexA);
+        const b = parse(hexB);
+        const r = Math.round(a[0] + (b[0] - a[0]) * t);
+        const g = Math.round(a[1] + (b[1] - a[1]) * t);
+        const bl = Math.round(a[2] + (b[2] - a[2]) * t);
+        return `rgb(${r},${g},${bl})`;
+    }
+
+    setAnalogDepthTarget(keyName, depth) {
+        this.analogTargetDepths[keyName] = depth;
+        if (this.analogCurrentDepths[keyName] === undefined) {
+            this.analogCurrentDepths[keyName] = 0;
+        }
+        if (!this.analogRafId) {
+            this.analogRafId = requestAnimationFrame(this._analogRafLoop);
+        }
+    }
+
+    //stolen from an innocent browser game
+    _analogRafLoop() {
+        this.analogRafId = null;
+        if (!this.previewElements) return;
+
+        const LERP = 0.35; //60fps
+        const SNAP = 0.001;
+        let anyActive = false;
+
+        for (const keyName of Object.keys(this.analogTargetDepths)) {
+            const target = this.analogTargetDepths[keyName];
+            let current = this.analogCurrentDepths[keyName] ?? 0;
+
+            const delta = target - current;
+            if (Math.abs(delta) < SNAP) {
+                current = target;
+            } else {
+                current = current + delta * LERP;
+                anyActive = true;
+            }
+            this.analogCurrentDepths[keyName] = current;
+
+            this._renderAnalogDepth(keyName, current);
+
+            if (current === 0 && target === 0) {
+                delete this.analogTargetDepths[keyName];
+                delete this.analogCurrentDepths[keyName];
+            }
+        }
+
+        if (anyActive || Object.keys(this.analogTargetDepths).length > 0) {
+            this.analogRafId = requestAnimationFrame(this._analogRafLoop);
+        }
+    }
+
+    _renderAnalogDepth(keyName, depth) {
+        if (!this.previewElements) return;
+        const elements = this.previewElements.keyElements.get(keyName);
+        if (!elements || elements.length === 0) return;
+
+        const depthThreshold = 0.15;
+        const effectiveDepth = depth < depthThreshold ? 0 : depth;
+        const maxScale = this.pressScaleValue || 1.05;
+        const scale = 1 + ((maxScale - 1) * effectiveDepth);
+
+        const unpressedWidth = this.outlineScaleUnpressed ?? 2;
+        const pressedWidth = this.outlineScalePressed ?? 2;
+        const glowRadius = this.glowRadius || '24px';
+        const keyLegendMode = this.keyLegendMode || "fading";
+
+        elements.forEach(el => {
+            const uniqueId = `${keyName}-${el.dataset.key || ''}`;
+            let styleEl = document.getElementById(`analog-depth-${uniqueId}`);
+            if (!styleEl) {
+                styleEl = document.createElement("style");
+                styleEl.id = `analog-depth-${uniqueId}`;
+                document.head.appendChild(styleEl);
+            }
+
+            el.style.setProperty('transform', `scale(${scale})`, 'important');
+
+            const fillHeight = effectiveDepth * 100;
+            const borderWidth = unpressedWidth + (pressedWidth - unpressedWidth) * Math.min(1, depth * 3);
+            const outerGlow = effectiveDepth > 0 ? `0 2px ${glowRadius} ${this.activeColor}` : 'none';
+
+            el.style.setProperty('border-width', `${borderWidth}px`, 'important');
+
+            styleEl.textContent = `
+                [data-key="${el.dataset.key || keyName}"]::after {
+                    height: ${fillHeight}% !important;
+                }
+                [data-key="${el.dataset.key || keyName}"].analog-key {
+                    border-color: ${this.activeColor} !important;
+                    box-shadow: ${outerGlow} !important;
+                }
+            `;
+
+            const primaryLabel = el.querySelector('.key-label-primary');
+            const invertedLabel = el.querySelector('.key-label-inverted');
+
+            if (keyLegendMode === "fading") {
+                if (primaryLabel) primaryLabel.style.color = this.lerpColor(this.inactiveColor, this.fontColor, Math.min(1, depth));
+                if (invertedLabel) invertedLabel.style.clipPath = 'inset(100% 0 0 0)';
+            } else if (keyLegendMode === "inverting") {
+                if (primaryLabel) primaryLabel.style.setProperty('color', this.inactiveColor, 'important');
+                if (invertedLabel) {
+                    const clipTop = ((1 - effectiveDepth) * 100).toFixed(2);
+                    invertedLabel.style.clipPath = `inset(${clipTop}% 0 0 0)`;
+                }
+            } else {
+                if (primaryLabel) primaryLabel.style.removeProperty('color');
+                if (invertedLabel) invertedLabel.style.clipPath = 'inset(100% 0 0 0)';
+            }
+        });
     }
 }

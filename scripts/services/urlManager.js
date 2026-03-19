@@ -72,6 +72,13 @@ export class UrlManager {
 
         addParam("gapmodifier", settings.gapmodifier);
 
+        if (settings.keylegendmode && settings.keylegendmode !== "fading") {
+            addParam("keylegendmode", settings.keylegendmode);
+        }
+        if (settings.forcedisableanalog === true || settings.forcedisableanalog === "true" || settings.forcedisableanalog === "1") {
+            params.push("forcedisableanalog=1");
+        }
+
         addParam("outlinescalepressed", settings.outlinescalepressed);
         addParam("outlinescaleunpressed", settings.outlinescaleunpressed);
 
@@ -147,6 +154,9 @@ export class UrlManager {
                     outlinescalepressed: decompressedParams.get("outlinescalepressed") || "2",
                     outlinescaleunpressed: decompressedParams.get("outlinescaleunpressed") || "2",
 
+                    keylegendmode: decompressedParams.get("keylegendmode") || "fading",
+                    forcedisableanalog: decompressedParams.get("forcedisableanalog") === "1",
+
                     wsauth: decompressedParams.get("wsauth") || "",
                 };
             }
@@ -180,6 +190,9 @@ export class UrlManager {
 
             outlinescalepressed: params.get("outlinescalepressed") || "2",
             outlinescaleunpressed: params.get("outlinescaleunpressed") || "2",
+
+            keylegendmode: params.get("keylegendmode") || "fading",
+            forcedisableanalog: params.get("forcedisableanalog") === "1",
 
             wsauth: params.get("wsauth") || "",
         };

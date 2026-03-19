@@ -182,52 +182,7 @@ export class WebSocketManager {
                         if (this.visualizer.analogMode && type === "key" && keyName.startsWith("key_")) {
                             const depth = this.keyDepths[keyId];
                             if (depth !== undefined && depth > 0) {
-                                const unpressedWidth = this.visualizer.outlineScaleUnpressed ?? 2;
-                                const pressedWidth = this.visualizer.outlineScalePressed ?? 2;
-                                const borderWidth = unpressedWidth + (pressedWidth - unpressedWidth) * Math.min(1, depth * 3);
-                                el.style.setProperty('border-width', `${borderWidth}px`, 'important');
-
-                                const depthThreshold = 0.02;
-                                const effectiveDepth = depth < depthThreshold ? 0 : depth;
-                                const fillHeight = effectiveDepth * 100;
-                                const maxScale = this.visualizer.pressScaleValue || 1.05;
-                                const scale = 1 + ((maxScale - 1) * effectiveDepth);
-
-                                el.style.setProperty('transform', `scale(${scale})`, 'important');
-
-                                const primaryLabel = el.querySelector('.key-label-primary');
-                                if (primaryLabel) {
-                                    const colorT = Math.min(1, depth * 2);
-                                    const interpolated = this.lerpColor(
-                                        this.visualizer.inactiveColor,
-                                        this.visualizer.fontColor,
-                                        colorT
-                                    );
-                                    primaryLabel.style.color = interpolated;
-                                }
-
-                                const uniqueId = `${keyName}-${el.dataset.key || ''}`;
-                                let styleEl = document.getElementById(`analog-depth-${uniqueId}`);
-                                if (!styleEl) {
-                                    styleEl = document.createElement("style");
-                                    styleEl.id = `analog-depth-${uniqueId}`;
-                                    document.head.appendChild(styleEl);
-                                }
-
-                                const glowRadius = this.visualizer.glowRadius || '24px';
-                                const boxShadow = effectiveDepth > 0 ? `0 2px ${glowRadius} ${this.visualizer.activeColor}` : 'none';
-
-                                const dataKeyValue = el.dataset.key || keyName;
-                                styleEl.textContent = `
-                                    [data-key="${dataKeyValue}"]::after {
-                                        height: ${fillHeight}% !important;
-                                        transition: height 0.1s cubic-bezier(0.4,0,0.2,1) !important;
-                                    }
-                                    [data-key="${dataKeyValue}"].analog-key {
-                                        border-color: ${this.visualizer.activeColor} !important;
-                                        box-shadow: ${boxShadow} !important;
-                                    }
-                                `;
+                                this.handleAnalogDepth({ event_type: "analog_depth", depth, rawcode: parseInt(keyId.substring(2)) });
                             }
                         } else if (type === "mouse") {
                             if (isActive) {
@@ -256,14 +211,16 @@ export class WebSocketManager {
         try {
             const event = JSON.parse(data);
             if (event.event_type === "mouse_moved" || event.event_type === "mouse_dragged") return;
-
+            
             if (event.event_type === "analog_depth") {
-                this.handleAnalogDepth(event);
+                if (!this.visualizer.forceDisableAnalog) {
+                    this.handleAnalogDepth(event);
+                }
                 return;
             }
 
             if (event.event_type === "mouse_wheel") {
-                const dir = event.rotation;
+                const dir = event.rotation ?? 1;
                 if (this.visualizer.previewElements.scrollDisplay) {
                     this.visualizer.handleScroll(dir);
                 }
@@ -307,63 +264,13 @@ export class WebSocketManager {
         }
 
         const keyInfo = this.getMappedKeyId(event);
-        if (!keyInfo || !keyInfo.name || !keyInfo.name.startsWith("key_")) return;
+        if (!keyInfo || !keyInfo.name || !keyInfo.name.startsWith('key_')) return;
 
         const depth = event.depth || 0;
         const keyId = keyInfo.id;
 
         this.keyDepths[keyId] = depth;
-
-        const elements = this.visualizer.previewElements.keyElements.get(keyInfo.name);
-        if (!elements || elements.length === 0) return;
-
-        const depthThreshold = 0.15;
-        const effectiveDepth = depth < depthThreshold ? 0 : depth;
-        const fillHeight = effectiveDepth * 100;
-        const maxScale = this.visualizer.pressScaleValue || 1.05;
-        const scale = 1 + ((maxScale - 1) * effectiveDepth);
-
-        elements.forEach(el => {
-            const uniqueId = `${keyInfo.name}-${el.dataset.key || ''}`;
-            let styleEl = document.getElementById(`analog-depth-${uniqueId}`);
-            if (!styleEl) {
-                styleEl = document.createElement("style");
-                styleEl.id = `analog-depth-${uniqueId}`;
-                document.head.appendChild(styleEl);
-            }
-
-            const glowRadius = this.visualizer.glowRadius || '24px';
-            const boxShadow = effectiveDepth > 0 ? `0 2px ${glowRadius} ${this.visualizer.activeColor}` : 'none';
-
-            el.style.setProperty('transform', `scale(${scale})`, 'important');
-
-            const primaryLabel = el.querySelector('.key-label-primary');
-            if (primaryLabel) {
-                const colorT = Math.min(1, depth * 1);
-                const interpolated = this.lerpColor(
-                    this.visualizer.inactiveColor,
-                    this.visualizer.fontColor,
-                    colorT
-                );
-                primaryLabel.style.color = interpolated;
-            }
-            const unpressedWidth = this.visualizer.outlineScaleUnpressed ?? 2;
-            const pressedWidth = this.visualizer.outlineScalePressed ?? 2;
-            const borderWidth = unpressedWidth + (pressedWidth - unpressedWidth) * Math.min(1, depth * 3);
-            el.style.setProperty('border-width', `${borderWidth}px`, 'important');
-
-            const dataKeyValue = el.dataset.key || keyInfo.name;
-            styleEl.textContent = `
-            [data-key="${dataKeyValue}"]::after {
-                height: ${fillHeight}% !important;
-                transition: height 0.1s cubic-bezier(0.4,0,0.2,1) !important;
-            }
-            [data-key="${dataKeyValue}"].analog-key {
-                border-color: ${this.visualizer.activeColor} !important;
-                box-shadow: ${boxShadow} !important;
-            }
-        `;
-        });
+        this.visualizer.setAnalogDepthTarget(keyInfo.name, depth);
     }
 
     clearStuckKeys() {
@@ -373,11 +280,16 @@ export class WebSocketManager {
             map.forEach(elements => {
                 elements.forEach(el => {
                     el.classList.remove("active");
+                    el.classList.remove("analog-key");
                     this.visualizer.activeElements.delete(el);
                     el.style.transform = "";
                     const primaryLabel = el.querySelector('.key-label-primary');
                     if (primaryLabel) {
-                        primaryLabel.style.color = '';
+                        primaryLabel.style.removeProperty('color');
+                    }
+                    const invertedLabel = el.querySelector('.key-label-inverted');
+                    if (invertedLabel) {
+                        invertedLabel.style.clipPath = 'inset(100% 0 0 0)';
                     }
                 });
             });
@@ -401,5 +313,11 @@ export class WebSocketManager {
         this.messageHistory = [];
         this.keyStates = {};
         this.keyDepths = {};
+        if (this.visualizer.analogRafId) {
+            cancelAnimationFrame(this.visualizer.analogRafId);
+            this.visualizer.analogRafId = null;
+        }
+        this.visualizer.analogTargetDepths = {};
+        this.visualizer.analogCurrentDepths = {};
     }
 }

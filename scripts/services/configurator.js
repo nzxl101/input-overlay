@@ -64,7 +64,9 @@ export class ConfiguratorMode {
             customLayoutRow3: DEFAULT_LAYOUT_STRINGS.row3,
             customLayoutRow4: DEFAULT_LAYOUT_STRINGS.row4,
             customLayoutRow5: DEFAULT_LAYOUT_STRINGS.row5,
-            customLayoutMouse: DEFAULT_LAYOUT_STRINGS.mouse
+            customLayoutMouse: DEFAULT_LAYOUT_STRINGS.mouse,
+            keylegendmode: "fading",
+            forcedisableanalog: false,
         };
 
         this.applySettings(defaultSettings);
@@ -110,6 +112,9 @@ export class ConfiguratorMode {
             customLayoutRow4: document.getElementById("customLayoutRow4") ? document.getElementById("customLayoutRow4").value : "",
             customLayoutRow5: document.getElementById("customLayoutRow5") ? document.getElementById("customLayoutRow5").value : "",
             customLayoutMouse: document.getElementById("customLayoutMouse") ? document.getElementById("customLayoutMouse").value : "",
+
+            keylegendmode: document.getElementById("keylegendmode") ? document.getElementById("keylegendmode").value : "fading",
+            forcedisableanalog: document.getElementById("forcedisableanalog") ? document.getElementById("forcedisableanalog").checked : false,
         };
     }
 
@@ -190,6 +195,8 @@ export class ConfiguratorMode {
         applyValue("customLayoutMouse", settings.customLayoutMouse !== undefined ? settings.customLayoutMouse : "");
 
         applyValue("gapmodifier", settings.gapmodifier);
+        applyValue("keylegendmode", settings.keylegendmode);
+        applyValue("forcedisableanalog", settings.forcedisableanalog);
     }
 
     updateState(settings = null) {

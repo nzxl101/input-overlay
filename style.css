@@ -27,7 +27,7 @@ body {
 }
 
 .cs-checkbox {
-    margin-top: 23px;
+    margin-top: 9px;
     margin-left: 4px;
 }
 
@@ -424,23 +424,32 @@ body {
 .return {
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
+    min-width: 0px;
+    background-color: var(--bg);
+    border-color: var(--border-light) var(--border-dark) var(--border-dark) var(--border-light);
 }
 
 .return.show {
     opacity: 1;
+    background-color: var(--bg);
+    border-color: var(--border-light) var(--border-dark) var(--border-dark) var(--border-light);
+    min-width: 0px;
 }
 
 .status {
-    background: rgba(0, 0, 0, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 12px 20px;
-    color: #fff;
-    font-size: 18px;
+    outline: 0;
+    border: 1px solid;
+    padding: 6px 4px 4px;
+    font-size: 1.6rem;
+    line-height: 1.6rem;
+    background-color: var(--secondary-bg);
+    border-color: var(--border-dark) var(--border-light) var(--border-light) var(--border-dark);
+    color: var(--secondary--text);
     position: fixed;
     bottom: 20px;
     left: 20px;
     max-width: 500px;
+    min-width: 500px;
 }
 
 .status.connected {

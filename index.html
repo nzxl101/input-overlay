@@ -22,7 +22,7 @@
                 id="return-button">edit this overlay</button>
         </div>
         <div class="status" id="status">connecting...</div>
-        <div class="container" id="inner-overlay-container">
+        <div class="container" id="inner-overlay-container" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">
             <div class="top-section">
                 <div class="keyboard-section" id="keyboard-target"></div>
             </div>
@@ -498,6 +498,23 @@
                                 <div class="close-btn cs-btn" id="closePatchSheet"></div>
 
                                 <div class="patchnotes">
+                                    <!-- 2026-03-19 -->
+                                    <h1>2026-03-18</h1>
+                                    <h3>quality of life</h3>
+                                    <ul>
+                                        <li>added analog mode specific settings for key legend fill modes</li>
+                                        <li>added analog force disable which will reject all incoming analog_depth
+                                            events to prevent analog mode from activating on the overlay end</li>
+                                    </ul>
+                                    <br>
+                                    <h3>bug fixes</h3>
+                                    <ul>
+                                        <li>removed transition times from analog_depth css events which caused a visible
+                                            delay</li>
+                                        <li>interpolated analog_depth to account for no css transition times</li>
+                                    </ul>
+                                    <br>
+
                                     <!-- 2026-03-18 -->
                                     <h1>2026-03-18</h1>
                                     <h3>quality of life</h3>
@@ -821,203 +838,238 @@
                     </fieldset>
                     <fieldset class="cs-fieldset">
                         <legend>style & animation</legend>
-                        <div class="nested-grid-3">
-                            <div class="cs-form-group">
-                                <label class="cs-input__label" for="activecolorhex">glow color</label>
-                                <div class="color-input-group">
-                                    <div id="activecolor" class="config-input pickr-target"
-                                        data-initial-color="#8b5cf6"></div>
-                                    <input id="activecolorhex" class="cs-input config-input color-hex-input" type="text"
-                                        maxlength="9" value="#8b5cf6">
-                                </div>
-                            </div>
-                            <div class="cs-slider">
-                                <div id="glowradiusvalue" class="value">24px</div>
-                                <div class="cs-ruler"></div>
-                                <input id="glowradius" class="config-input" max="80" min="0" step="2" type="range"
-                                    value="24">
-                                <label for="glowradius">glow radius</label>
-                            </div>
-                            <div class="cs-form-group">
-                                <label class="cs-input__label" for="fontfamily">font family</label>
-                                <select class="cs-select config-input" id="fontfamily"
-                                    style="max-height: 22px; font-size: 12px; margin-top:4px">
-                                    <option value="">system default</option>
-                                    <option value="Borevs">Borevs</option>
-                                    <option value="bitcount-prop-single">Bitcount Prop Single</option>
-                                    <option value="bungee">Bungee</option>
-                                    <option value="comfortaa">Comfortaa</option>
-                                    <option value="fredoka">Fredoka</option>
-                                    <option value="lexend">Lexend</option>
-                                    <option value="lexend-giga">Lexend Giga</option>
-                                    <option value="lilita-one">Lilita One</option>
-                                    <option value="press-start-2p">Press Start 2P</option>
-                                    <option value="smooch-sans">Smooch Sans</option>
-                                    <option value="sora">Sora</option>
-                                    <option value="special-elite">Special Elite</option>
-                                    <option value="abel">Abel
-                                    </option>
-                                    <option value="archivo-black">
-                                        Archivo Black</option>
-                                    <option value="arimo">
-                                        Arimo</option>
-                                    <option value="bebas-neue">
-                                        Bebas Neue</option>
-                                    <option value="caveat-brush">
-                                        Caveat Brush</option>
-                                    <option value="chewy">Chewy
-                                    </option>
-                                    <option value="cinzel">
-                                        Cinzel</option>
-                                    <option value="fjalla-one">
-                                        Fjalla One</option>
-                                    <option value="inter">
-                                        Inter</option>
-                                    <option value="josefin-sans">
-                                        Josefin Sans</option>
-                                    <option value="knewave">
-                                        Knewave</option>
-                                    <option value="lato">
-                                        Lato</option>
-                                    <option value="montserrat">
-                                        Montserrat</option>
-                                    <option value="noto-sans">
-                                        Noto Sans</option>
-                                    <option value="open-sans">
-                                        Open Sans</option>
-                                    <option value="orbitron">
-                                        Orbitron</option>
-                                    <option value="oswald">
-                                        Oswald</option>
-                                    <option value="pacifico">
-                                        Pacifico</option>
-                                    <option value="raleway">
-                                        Raleway</option>
-                                    <option value="roboto-condensed">
-                                        Roboto Condensed</option>
-                                    <option value="roboto-mono">
-                                        Roboto Mono</option>
-                                    <option value="roboto">
-                                        Roboto</option>
-                                    <option value="share-tech">
-                                        Share Tech</option>
-                                    <option value="titan-one">
-                                        Titan One</option>
-                                    <option value="ubuntu">
-                                        Ubuntu</option>
-                                </select>
-                            </div>
-                            <div class="cs-form-group">
-                                <label class="cs-input__label" for="backgroundcolorhex">inactive key background</label>
-                                <div class="color-input-group">
-                                    <div id="backgroundcolor" class="config-input pickr-target"
-                                        data-initial-color="#1a1a1ad1"></div>
-                                    <input id="backgroundcolorhex" class="cs-input config-input color-hex-input"
-                                        type="text" maxlength="9" value="#1a1a1ad1">
-                                </div>
-                            </div>
-                            <div class="cs-slider">
-                                <div id="borderradiusvalue" class="value">8px</div>
-                                <div class="cs-ruler"></div>
-                                <input id="borderradius" class="config-input" max="40" min="0" step="1" type="range"
-                                    value="8">
-                                <label for="borderradius">border radius</label>
-                            </div>
-                            <div class="cs-form-group">
-                                <div class="cs-checkbox">
-                                    <input type="checkbox" checked class="config-input" id="boldfont">
-                                    <label for="boldfont" class="cs-checkbox__label">bold font</label>
-                                </div>
-                            </div>
-                            <div class="cs-form-group">
-                                <label class="cs-input__label" for="activebgcolorhex">active key background</label>
-                                <div class="color-input-group">
-                                    <div id="activebgcolor" class="config-input pickr-target"
-                                        data-initial-color="#202020"></div>
-                                    <input id="activebgcolorhex" class="cs-input config-input color-hex-input"
-                                        type="text" maxlength="9" value="#202020">
-                                </div>
-                            </div>
-                            <div class="cs-slider">
-                                <div id="pressscalevalue" class="value">1.05x</div>
-                                <div class="cs-ruler"></div>
-                                <input id="pressscale" class="config-input" max="300" min="0" step="5" type="range"
-                                    value="100">
-                                <label for="pressscale">press scale</label>
-                            </div>
-                            <div class="cs-form-group">
-                                <div class="cs-checkbox">
-                                    <input type="checkbox" class="config-input" id="hidemouse">
-                                    <label for="hidemouse" class="cs-checkbox__label">hide mouse buttons</label>
-                                </div>
-                            </div>
-                            <div class="cs-form-group">
-                                <label class="cs-input__label" for="outlinecolorhex">outline color</label>
-                                <div class="color-input-group">
-                                    <div id="outlinecolor" class="config-input pickr-target"
-                                        data-initial-color="#4f4f4f"></div>
-                                    <input id="outlinecolorhex" class="cs-input config-input color-hex-input"
-                                        type="text" maxlength="9" value="#4f4f4f">
-                                </div>
-                            </div>
-                            <div class="cs-slider">
-                                <div id="animationspeedvalue" class="value">1.0x</div>
-                                <div class="cs-ruler"></div>
-                                <input id="animationspeed" class="config-input" max="300" min="0" step="10" type="range"
-                                    value="100">
-                                <label for="animationspeed">speed</label>
-                            </div>
-                            <div class="cs-form-group">
-                                <div class="cs-checkbox">
-                                    <input type="checkbox" class="config-input" id="hidescrollcombo">
-                                    <label for="hidescrollcombo" class="cs-checkbox__label">hide scroll combo</label>
-                                </div>
-                            </div>
-                            <div class="cs-form-group">
-                                <label class="cs-input__label" for="fontcolorhex">active font color</label>
-                                <div class="color-input-group">
-                                    <div id="fontcolor" class="config-input pickr-target" data-initial-color="#ffffff">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; align-items: start;">
+
+                            <!-- colors -->
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div class="cs-form-group">
+                                    <label class="cs-input__label" for="activecolorhex">glow color</label>
+                                    <div class="color-input-group">
+                                        <div id="activecolor" class="config-input pickr-target"
+                                            data-initial-color="#8b5cf6"></div>
+                                        <input id="activecolorhex" class="cs-input config-input color-hex-input"
+                                            type="text" maxlength="9" value="#8b5cf6">
                                     </div>
-                                    <input id="fontcolorhex" class="cs-input config-input color-hex-input" type="text"
-                                        maxlength="9" value="#ffffff">
                                 </div>
-                            </div>
-                            <div class="cs-slider">
-                                <div id="gapmodifiervalue" class="value">100%</div>
-                                <div class="cs-ruler"></div>
-                                <input id="gapmodifier" class="config-input" max="300" min="1" step="1" type="range"
-                                    value="100">
-                                <label for="gapmodifier">gap</label>
-                            </div>
-                            <div class="cs-form-group">
-                            </div>
-                            <div class="cs-form-group">
-                                <label class="cs-input__label" for="inactivecolorhex">inactive font color</label>
-                                <div class="color-input-group">
-                                    <div id="inactivecolor" class="config-input pickr-target"
-                                        data-initial-color="#808080"></div>
-                                    <input id="inactivecolorhex" class="cs-input config-input color-hex-input"
-                                        type="text" maxlength="9" value="#808080">
+                                <div class="cs-form-group">
+                                    <label class="cs-input__label" for="backgroundcolorhex">inactive key bg</label>
+                                    <div class="color-input-group">
+                                        <div id="backgroundcolor" class="config-input pickr-target"
+                                            data-initial-color="#1a1a1ad1"></div>
+                                        <input id="backgroundcolorhex" class="cs-input config-input color-hex-input"
+                                            type="text" maxlength="9" value="#1a1a1ad1">
+                                    </div>
                                 </div>
-                            </div>
-                            <div style="display: flex; gap: 8px;">
-                                <div class="cs-slider" style="flex: 1; min-width: 0;">
-                                    <div id="outlinescaleunpressedvalue" class="value">2px</div>
-                                    <div class="cs-ruler"></div>
-                                    <input id="outlinescaleunpressed" class="config-input" max="10" min="0" step="0.25"
-                                        type="range" value="2">
-                                    <label for="outlinescaleunpressed">outline unpressed</label>
+                                <div class="cs-form-group">
+                                    <label class="cs-input__label" for="activebgcolorhex">active key bg</label>
+                                    <div class="color-input-group">
+                                        <div id="activebgcolor" class="config-input pickr-target"
+                                            data-initial-color="#202020"></div>
+                                        <input id="activebgcolorhex" class="cs-input config-input color-hex-input"
+                                            type="text" maxlength="9" value="#202020">
+                                    </div>
                                 </div>
-                                <div class="cs-slider" style="flex: 1; min-width: 0;">
-                                    <div id="outlinescalepressedvalue" class="value">2px</div>
-                                    <div class="cs-ruler"></div>
-                                    <input id="outlinescalepressed" class="config-input" max="10" min="0" step="0.25"
-                                        type="range" value="2">
-                                    <label for="outlinescalepressed">outline pressed</label>
+                                <div class="cs-form-group">
+                                    <label class="cs-input__label" for="outlinecolorhex">outline color</label>
+                                    <div class="color-input-group">
+                                        <div id="outlinecolor" class="config-input pickr-target"
+                                            data-initial-color="#4f4f4f"></div>
+                                        <input id="outlinecolorhex" class="cs-input config-input color-hex-input"
+                                            type="text" maxlength="9" value="#4f4f4f">
+                                    </div>
+                                </div>
+                                <div class="cs-form-group">
+                                    <label class="cs-input__label" for="fontcolorhex">active font color</label>
+                                    <div class="color-input-group">
+                                        <div id="fontcolor" class="config-input pickr-target"
+                                            data-initial-color="#ffffff"></div>
+                                        <input id="fontcolorhex" class="cs-input config-input color-hex-input"
+                                            type="text" maxlength="9" value="#ffffff">
+                                    </div>
+                                </div>
+                                <div class="cs-form-group">
+                                    <label class="cs-input__label" for="inactivecolorhex">inactive font color</label>
+                                    <div class="color-input-group">
+                                        <div id="inactivecolor" class="config-input pickr-target"
+                                            data-initial-color="#808080"></div>
+                                        <input id="inactivecolorhex" class="cs-input config-input color-hex-input"
+                                            type="text" maxlength="9" value="#808080">
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="cs-form-group"></div>
+                            <!-- sliders -->
+                            <div style="display: flex; flex-direction: column; gap: 13px;">
+                                <div style="display: flex; gap: 8px;">
+                                    <div class="cs-slider" style="flex: 1; min-width: 0;">
+                                        <div id="glowradiusvalue" class="value">24px</div>
+                                        <div class="cs-ruler"></div>
+                                        <input id="glowradius" class="config-input" max="80" min="0" step="2"
+                                            type="range" value="24">
+                                        <label for="glowradius">glow radius</label>
+                                    </div>
+                                    <div class="cs-slider" style="flex: 1; min-width: 0;">
+                                        <div id="borderradiusvalue" class="value">8px</div>
+                                        <div class="cs-ruler"></div>
+                                        <input id="borderradius" class="config-input" max="40" min="0" step="1"
+                                            type="range" value="8">
+                                        <label for="borderradius">border radius</label>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <div class="cs-slider" style="flex: 1; min-width: 0;">
+                                        <div id="pressscalevalue" class="value">1.05x</div>
+                                        <div class="cs-ruler"></div>
+                                        <input id="pressscale" class="config-input" max="300" min="0" step="5"
+                                            type="range" value="100">
+                                        <label for="pressscale">press scale</label>
+                                    </div>
+                                    <div class="cs-slider" style="flex: 1; min-width: 0;">
+                                        <div id="animationspeedvalue" class="value">1.0x</div>
+                                        <div class="cs-ruler"></div>
+                                        <input id="animationspeed" class="config-input" max="300" min="0" step="10"
+                                            type="range" value="100">
+                                        <label for="animationspeed">speed</label>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <div class="cs-slider" style="flex: 1; min-width: 0;">
+                                        <div id="outlinescaleunpressedvalue" class="value">2px</div>
+                                        <div class="cs-ruler"></div>
+                                        <input id="outlinescaleunpressed" class="config-input" max="10" min="0"
+                                            step="0.25" type="range" value="2">
+                                        <label for="outlinescaleunpressed">outline unpressed</label>
+                                    </div>
+                                    <div class="cs-slider" style="flex: 1; min-width: 0;">
+                                        <div id="outlinescalepressedvalue" class="value">2px</div>
+                                        <div class="cs-ruler"></div>
+                                        <input id="outlinescalepressed" class="config-input" max="10" min="0"
+                                            step="0.25" type="range" value="2">
+                                        <label for="outlinescalepressed">outline pressed</label>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <div class="cs-slider" style="flex: 1; min-width: 0;">
+                                        <div id="gapmodifiervalue" class="value">100%</div>
+                                        <div class="cs-ruler"></div>
+                                        <input id="gapmodifier" class="config-input" max="300" min="1" step="1"
+                                            type="range" value="100">
+                                        <label for="gapmodifier">gap</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- checkboxes -->
+                            <div style="display: flex; flex-direction: column; gap: 1px;">
+                                <div class="cs-form-group">
+                                    <label class="cs-input__label" for="fontfamily">font family</label>
+                                    <select class="cs-select config-input" id="fontfamily"
+                                        style="max-height: 22px; font-size: 12px; margin-top:4px">
+                                        <option value="">system default</option>
+                                        <option value="Borevs">Borevs</option>
+                                        <option value="bitcount-prop-single">Bitcount Prop Single</option>
+                                        <option value="bungee">Bungee</option>
+                                        <option value="comfortaa">Comfortaa</option>
+                                        <option value="fredoka">Fredoka</option>
+                                        <option value="lexend">Lexend</option>
+                                        <option value="lexend-giga">Lexend Giga</option>
+                                        <option value="lilita-one">Lilita One</option>
+                                        <option value="press-start-2p">Press Start 2P</option>
+                                        <option value="smooch-sans">Smooch Sans</option>
+                                        <option value="sora">Sora</option>
+                                        <option value="special-elite">Special Elite</option>
+                                        <option value="abel">Abel
+                                        </option>
+                                        <option value="archivo-black">
+                                            Archivo Black</option>
+                                        <option value="arimo">
+                                            Arimo</option>
+                                        <option value="bebas-neue">
+                                            Bebas Neue</option>
+                                        <option value="caveat-brush">
+                                            Caveat Brush</option>
+                                        <option value="chewy">Chewy
+                                        </option>
+                                        <option value="cinzel">
+                                            Cinzel</option>
+                                        <option value="fjalla-one">
+                                            Fjalla One</option>
+                                        <option value="inter">
+                                            Inter</option>
+                                        <option value="josefin-sans">
+                                            Josefin Sans</option>
+                                        <option value="knewave">
+                                            Knewave</option>
+                                        <option value="lato">
+                                            Lato</option>
+                                        <option value="montserrat">
+                                            Montserrat</option>
+                                        <option value="noto-sans">
+                                            Noto Sans</option>
+                                        <option value="open-sans">
+                                            Open Sans</option>
+                                        <option value="orbitron">
+                                            Orbitron</option>
+                                        <option value="oswald">
+                                            Oswald</option>
+                                        <option value="pacifico">
+                                            Pacifico</option>
+                                        <option value="raleway">
+                                            Raleway</option>
+                                        <option value="roboto-condensed">
+                                            Roboto Condensed</option>
+                                        <option value="roboto-mono">
+                                            Roboto Mono</option>
+                                        <option value="roboto">
+                                            Roboto</option>
+                                        <option value="share-tech">
+                                            Share Tech</option>
+                                        <option value="titan-one">
+                                            Titan One</option>
+                                        <option value="ubuntu">
+                                            Ubuntu</option>
+                                    </select>
+                                </div>
+                                <div class="cs-form-group">
+                                    <div class="cs-checkbox">
+                                        <input type="checkbox" checked class="config-input" id="boldfont">
+                                        <label for="boldfont" class="cs-checkbox__label">bold font</label>
+                                    </div>
+                                </div>
+                                <div class="cs-form-group">
+                                    <div class="cs-checkbox">
+                                        <input type="checkbox" class="config-input" id="hidemouse">
+                                        <label for="hidemouse" class="cs-checkbox__label">hide mouse buttons</label>
+                                    </div>
+                                </div>
+                                <div class="cs-form-group">
+                                    <div class="cs-checkbox">
+                                        <input type="checkbox" class="config-input" id="hidescrollcombo">
+                                        <label for="hidescrollcombo" class="cs-checkbox__label">hide scroll
+                                            combo</label>
+                                    </div>
+                                </div>
+                                <fieldset class="cs-fieldset">
+                                    <legend>Analog stuff</legend>
+                                    <div class="nested-grid-1">
+                                        <div class="cs-form-group" style="margin-top: -20px;">
+                                            <label class="cs-input__label" for="keylegendmode">key legend mode</label>
+                                            <select class="cs-select config-input" id="keylegendmode"
+                                                style="max-height: 22px; font-size: 12px;">
+                                                <option value="fading">fading</option>
+                                                <option value="inverting">inverting</option>
+                                                <option value="digital">digital</option>
+                                            </select>
+                                        </div>
+                                        <div class="cs-checkbox" style="margin-top: 7px;">
+                                            <input type="checkbox" class="config-input" id="forcedisableanalog">
+                                            <label for="forcedisableanalog" class="cs-checkbox__label">force
+                                                disable</label>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+
                         </div>
                     </fieldset>
                 </div>
