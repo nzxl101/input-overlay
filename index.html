@@ -7,10 +7,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>input overlay configurator</title>
     <link rel="icon" type="image/png" href="media/favicon.png" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/ekmas/cs16.css@main/css/cs16.min.css">
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css" />
-
+    <link rel="stylesheet" type="text/css" href="style.css">
     <script src="https://cdn.counter.dev/script.js" data-id="8990aad5-58d6-440b-9322-f04502f4214f"
         data-utcoffset="1"></script>
 </head>
@@ -30,724 +31,547 @@
             <div class="bottom-section" id="mouse-target"></div>
         </div>
     </div>
+    <div id="configurator">
+        <aside class="cfg-sidebar">
+            <div class="cfg-title">
+                <img src="media/favicon.png" width="32" />
+                <span class="cfg-title-text">input overlay</span>
+                <a href="https://x.com/girlglock_" target="_blank" style="margin-right: 1px;"><img
+                        src="https://www.toptal.com/designers/htmlarrows/assets/images/twitter-button-light-4b743ac5.svg"
+                        style="width: 14px; height: 14px; margin-right: 1px; margin-top: 8px; filter: brightness(0) saturate(100%) invert(100%);">
+                </a>
+                <a href="https://github.com/girlglock/input-overlay" target="_blank" style="margin-right: 1px;"><img
+                        src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg"
+                        style="width: 14px; height: 14px; margin-right: 1px; margin-top: 8px; filter: brightness(0) saturate(100%) invert(100%);">
+                </a>
+            </div>
 
-    <div class="centered" id="configurator" style="margin-left: 25%;">
-        <div class="cs-dialog">
-            <div class="content config-layout">
-                <div class="config-column" style="min-width: 400px">
-                    <fieldset class="cs-fieldset preview-fieldset" style="max-height: 285px;">
-                        <legend>input overlay configurator</legend>
-                        <div class="nested-grid-1">
-                            <details class="fullscreen-details" id="instructionSheetDetails">
-                                <summary>instructions [ ! ]</summary>
-                                <div class="close-btn cs-btn" id="instructionPatchSheet"></div>
-
-                                <div class="instructions">
-                                    <br>
-                                    <h1>Option #1 (recommended)</h1>
-                                    <ol style="margin-left: 15px;">
-                                        <li>get the <a href="https://github.com/girlglock/input-overlay/releases"
-                                                target="_blank">input-overlay-ws</a> server</li>
-                                        <li>put it somewhere on your computer and run it</li>
-                                        <li>right click on the tray icon and copy the auth token</li>
-                                        <li>enter the auth token in the connection section (address and port can stay
-                                            default)</li>
-                                        <li>edit the overlay to your desire</li>
-                                        <li>copy the overlay url (⎘ copy url)</li>
-                                        <li>create a new browser source in obs (or any other streaming software)</li>
-                                        <li>paste the url into the browser source</li>
-                                        <ul style="margin-top: 10px;">
-                                            <li>tip: you can also edit the config.json to set a custom address and port
-                                                for the <b>input-overlay-ws</b> to use</li>
-                                            <li>tip: you can also load previously saved urls using <b>load url</b>
-                                                button</li>
-                                            <li>tip: please check out the key whitelist inside <b>input-overlay-ws</b>
-                                                server settings and configure it to send your needed keys to the overlay
-                                            </li>
-                                        </ul>
-                                        <blockquote class="cs-note"
-                                            style="border-left: 5px solid #5cf669; padding: 10px; margin: 15px -15px;">
-                                            🛈 This method supports hall effect keyboards. To enable support for them
-                                            enable it in your <b>input-overlay-ws</b> server settings<br>
-                                        </blockquote>
-                                    </ol>
-                                    <br>
-                                    <h1>Option #2</h1>
-                                    <ol style="margin-left: 15px;">
-                                        <li>install <a href="https://github.com/univrsal/input-overlay"
-                                                target="_blank">input-overlay
-                                                plugin</a> in obs</li>
-                                        <li>enable websocket server in plugin settings (not obs websocket, the plugin
-                                            one)</li>
-                                        <li>check the address and port (usually its fine when its default,
-                                            authentication is not possible so leave it empty)</li>
-                                        <li>restart obs</li>
-                                        <li>copy the overlay url (⎘ copy url)</li>
-                                        <li>create a new browser source in obs</li>
-                                        <li>paste the url into the browser source</li>
-                                        <blockquote class="cs-note"
-                                            style="border-left: 5px solid #f65c5c; padding: 10px; margin: 15px -15px;">
-                                            🛈 while this method is easier since you dont have to worry about running
-                                            the separate ws server, it lacks authentication.<br>
-                                        </blockquote>
-                                    </ol>
-                                </div>
-                            </details>
-                            <details class="fullscreen-details" id="cheatSheetDetails">
-                                <summary>cheat sheet</summary>
-                                <div class="close-btn  cs-btn" id="closeCheatSheet"></div>
-
-                                <div style="margin-left: 10px; margin-top: 30px; padding: 5px;">
-                                    <h2>key naming conventions</h2>
-                                    <p>use the <b>internal name</b> when defining a key in your custom layout string.
-                                        the
-                                        basic syntax is:</p>
-                                    <blockquote class="cs-note"
-                                        style="border-left: 5px solid #8b5cf6; padding: 10px; margin: 15px 0;">
-                                        🛈 comma separated for multiple keys<br>
-                                        <code>[internal_name]:"[label]":[width class]</code>
-                                    </blockquote>
-
-                                    <h3 style="margin-top: 20px;">multi-key bindings</h3>
-                                    <p>you can bind multiple keys to the same visual element using the pipe
-                                        <code>|</code>
-                                        separator:
-                                    </p>
-                                    <blockquote class="cs-note"
-                                        style="border-left: 5px solid #8b5cf6; padding: 10px; margin: 15px 0;">
-                                        <code>key_w|mouse_4:"W"</code> - both W and mouse4 activate the same element<br>
-                                        <code>key_q|key_e:"use"</code> - both Q and E show "use"<br>
-                                        <code>key_c|key_leftcrtl:"duck"</code> - both C and CTRL show "duck"
-                                    </blockquote>
-
-                                    <h3 style="margin-top: 20px;">standard keys (a-z, 0-9, and symbols)</h3>
-                                    <table class="key-list-table">
-                                        <thead>
-                                            <tr>
-                                                <th>label example</th>
-                                                <th>internal name</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>a - z</td>
-                                                <td><code>key_a</code> - <code>key_z</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>0 - 9</td>
-                                                <td><code>key_0</code> - <code>key_9</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>` (tilde)</td>
-                                                <td><code>key_backtick</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>- (minus)</td>
-                                                <td><code>key_minus</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>= (equals)</td>
-                                                <td><code>key_equals</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>[ (open bracket)</td>
-                                                <td><code>key_openbracket</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>] (close bracket)</td>
-                                                <td><code>key_closebracket</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>\ (backslash)</td>
-                                                <td><code>key_backslash</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>; (semicolon)</td>
-                                                <td><code>key_semicolon</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>' (apostrophe)</td>
-                                                <td><code>key_apostrophe</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>, (comma)</td>
-                                                <td><code>key_comma</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>. (period)</td>
-                                                <td><code>key_period</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>/ (slash)</td>
-                                                <td><code>key_slash</code></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                    <h3 style="margin-top: 20px;">control & special keys</h3>
-                                    <table class="key-list-table">
-                                        <thead>
-                                            <tr>
-                                                <th>label example</th>
-                                                <th>internal name</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>esc</td>
-                                                <td><code>key_escape</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>tab</td>
-                                                <td><code>key_tab</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>caps</td>
-                                                <td><code>key_capslock</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>shift (left/right)</td>
-                                                <td><code>key_leftshift</code>, <code>key_rightshift</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>ctrl (left/right)</td>
-                                                <td><code>key_leftctrl</code>, <code>key_rightctrl</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>alt (left/right)</td>
-                                                <td><code>key_leftalt</code>, <code>key_rightalt</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>win/meta (left/right)</td>
-                                                <td><code>key_leftwin</code>, <code>key_rightwin</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>space</td>
-                                                <td><code>key_space</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>enter</td>
-                                                <td><code>key_enter</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>backspace</td>
-                                                <td><code>key_backspace</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>menu</td>
-                                                <td><code>key_menu</code></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                    <h3 style="margin-top: 20px;">function & utility keys</h3>
-                                    <table class="key-list-table">
-                                        <thead>
-                                            <tr>
-                                                <th>label example</th>
-                                                <th>internal name</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>f1 - f12</td>
-                                                <td><code>key_f1</code> - <code>key_f12</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>prtscn</td>
-                                                <td><code>key_printscreen</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>scrlck</td>
-                                                <td><code>key_scrolllock</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>pause</td>
-                                                <td><code>key_pause</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>ins</td>
-                                                <td><code>key_insert</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>del</td>
-                                                <td><code>key_delete</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>home / end</td>
-                                                <td><code>key_home</code>, <code>key_end</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>pgup / pgdn</td>
-                                                <td><code>key_pageup</code>, <code>key_pagedown</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>arrows</td>
-                                                <td><code>key_leftarrow</code>, <code>key_uparrow</code>,
-                                                    <code>key_rightarrow</code>, <code>key_downarrow</code>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                    <h3 style="margin-top: 20px;">numpad keys</h3>
-                                    <table class="key-list-table">
-                                        <thead>
-                                            <tr>
-                                                <th>label example</th>
-                                                <th>internal name</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>numlock</td>
-                                                <td><code>key_numlock</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>/ * - +</td>
-                                                <td><code>key_numpad_divide</code>, <code>key_numpad_multiply</code>,
-                                                    <code>key_numpad_subtract</code>, <code>key_numpad_add</code>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>7 - 9</td>
-                                                <td><code>key_numpad_7</code>, <code>key_numpad_8</code>,
-                                                    <code>key_numpad_9</code>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>4 - 6</td>
-                                                <td><code>key_numpad_4</code>, <code>key_numpad_5</code>,
-                                                    <code>key_numpad_6</code>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>1 - 3</td>
-                                                <td><code>key_numpad_1</code>, <code>key_numpad_2</code>,
-                                                    <code>key_numpad_3</code>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>0 . enter</td>
-                                                <td><code>key_numpad_0</code>, <code>key_numpad_decimal</code>,
-                                                    <code>key_numpad_enter</code>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                    <h3 style="margin-top: 20px;">mouse and scroller identifiers</h3>
-                                    <table class="key-list-table">
-                                        <thead>
-                                            <tr>
-                                                <th>label example</th>
-                                                <th>internal name / type</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>m1 (left)</td>
-                                                <td><code>mouse_left</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>m2 (right)</td>
-                                                <td><code>mouse_right</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>m3 (middle/wheel)</td>
-                                                <td><code>mouse_middle</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>m4</td>
-                                                <td><code>mouse_4</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>m5</td>
-                                                <td><code>mouse_5</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td>scroller display</td>
-                                                <td><code>scroller:"default":"up":"down"</code> (3 labels required)</td>
-                                            </tr>
-                                            <tr>
-                                                <td>side button combo</td>
-                                                <td><code>mouse_side:"m5":"m4"</code> (2 labels required)</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                    <h3 style="margin-top: 20px;">width classes</h3>
-                                    <p>use these for the optional <code>[width class]</code> part of the key definition:
-                                    </p>
-                                    <blockquote class="cs-note"
-                                        style="border-left: 5px solid #8b5cf6; padding: 10px; margin: 15px 0;">
-                                        🛈 <code>u0-01</code> to <code>u7</code> - increments of 0.01u available
-                                    </blockquote>
-                                    <table class="key-list-table">
-                                        <thead>
-                                            <tr>
-                                                <th>class name</th>
-                                                <th>width</th>
-                                                <th>notes</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>(none)</td>
-                                                <td>1u</td>
-                                                <td>default width for all keys</td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>u1-25</code></td>
-                                                <td>1.25u</td>
-                                                <td>common for ctrl, alt on some layouts</td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>u1-5</code></td>
-                                                <td>1.5u</td>
-                                                <td>common for tab, ctrl, alt</td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>u1-75</code></td>
-                                                <td>1.75u</td>
-                                                <td>common for caps lock</td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>u2</code></td>
-                                                <td>2u</td>
-                                                <td>common for shift, backspace, enter</td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>u2-25</code></td>
-                                                <td>2.25u</td>
-                                                <td>common for larger shift keys</td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>u2-47</code></td>
-                                                <td>2.47u</td>
-                                                <td>optimized for mouse buttons</td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>u3</code></td>
-                                                <td>3u</td>
-                                                <td>used for compact space bars</td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>u3-33</code></td>
-                                                <td>3.33u</td>
-                                                <td>balanced space bar size</td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>u6-25</code></td>
-                                                <td>6.25u</td>
-                                                <td>full size space bar</td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>mouse-wide</code></td>
-                                                <td>special</td>
-                                                <td>optimized width for wide mouse buttons</td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>invisible</code></td>
-                                                <td>1u</td>
-                                                <td>key exists for press detection but is hidden. supports width classes
-                                                    like <code>u2</code></td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>dummy</code></td>
-                                                <td>none</td>
-                                                <td>placeholder to skip positions without creating visible elements</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                    <h3 style="margin-top: 20px;">special syntax</h3>
-                                    <table class="key-list-table">
-                                        <thead>
-                                            <tr>
-                                                <th>syntax</th>
-                                                <th>description</th>
-                                                <th>example</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td><code>invisible</code></td>
-                                                <td>creates an invisible spacer</td>
-                                                <td><code>invisible</code> or with width:
-                                                    <code>key_escape:"invis":u2</code>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>dummy</code></td>
-                                                <td>empty row placeholder</td>
-                                                <td><code>dummy</code> (used to remove rows, this is done for backwards
-                                                    compatibility reasons with older links that didnt have custom rows
-                                                    yet)</td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>|</code></td>
-                                                <td>multi-key binding separator</td>
-                                                <td><code>key_w|key_c:"C"</code></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </details>
-                            <details class="fullscreen-details" id="patchSheetDetails">
-                                <summary>patch notes</summary>
-                                <div class="close-btn cs-btn" id="closePatchSheet"></div>
-
-                                <div class="patchnotes">
-                                    <!-- 2026-03-19 -->
-                                    <h1>2026-03-18</h1>
-                                    <h3>quality of life</h3>
-                                    <ul>
-                                        <li>added analogsense js sdk for live key preview</li>
-                                        <li>added analog mode specific settings for key legend fill modes</li>
-                                        <li>added analog force disable which will reject all incoming analog_depth
-                                            events to prevent analog mode from activating on the overlay end</li>
-                                    </ul>
-                                    <br>
-                                    <h3>bug fixes</h3>
-                                    <ul>
-                                        <li>removed transition times from analog_depth css events which caused a visible
-                                            delay</li>
-                                        <li>interpolated analog_depth to account for no css transition times</li>
-                                    </ul>
-                                    <br>
-
-                                    <!-- 2026-03-18 -->
-                                    <h1>2026-03-18</h1>
-                                    <h3>quality of life</h3>
-                                    <ul>
-                                        <li>removed analog mode checkbox, the overlay will now auto-enable it when the
-                                            server sends analog_depth events</li>
-                                        <li>added outline scale modifier for pressed and unpressed keys</li>
-                                        <li>key legends will now fade with analog_depth rather than listen to digital
-                                            states</li>
-                                    </ul>
-                                    <br>
-
-                                    <!-- 2026-03-15 -->
-                                    <h1>2026-03-15</h1>
-                                    <h3>new new server</h3>
-                                    <li>added a slightly more complex ws server which has now a propper settings window
-                                        and support for analog keyboards (analogsense sdk)</li>
-                                    <br>
-                                    <h3>bug fixes</h3>
-                                    <ul>
-                                        <li>i low key forgot what i was doing since it has been months. sorgi if
-                                            something is still brokey,,.
-                                        </li>
-                                    </ul>
-                                    <br>
-                                    <h3>quality of life</h3>
-                                    <ul>
-                                        <li>added a deadlock preset</li>
-                                    </ul>
-                                    <br>
-
-                                    <!-- 2025-12-27 -->
-                                    <h1>2025-12-27</h1>
-                                    <h3>new server</h3>
-                                    <li>added a very simple ws server which supports authentication and can be used
-                                        without obs or with other recording software that supports browser sources. the
-                                        input-overlay obs plugin will continue to work as before if you wish to continue
-                                        using it</li>
-                                    <br>
-                                    <h3>bug fixes</h3>
-                                    <ul>
-                                        <li>fix keys not activating when having the same key configured multiple times
-                                        </li>
-                                    </ul>
-                                    <br>
-                                    <h3>quality of life</h3>
-                                    <ul>
-                                        <li>added a presets dropdown</li>
-                                        <li>added ability to use img tags in key labels</li>
-                                        <li>added a + button to add new keys. this should be easier to use for most
-                                            people
-                                        </li>
-                                    </ul>
-                                    <br>
-
-                                    <!-- 2025-12-06 -->
-                                    <h1>2025-12-06</h1>
-                                    <br>
-                                    <h3>bug fixes</h3>
-                                    <ul>
-                                        <li>fix mouse_4 and mouse_5 elements</li>
-                                        <li>fix oversight in unpress logic causing wrong held keys to be unpressed</li>
-                                    </ul>
-                                    <br>
-
-                                    <!-- 2025-12-04 -->
-                                    <h1>2025-12-04</h1>
-                                    <br>
-                                    <h3>bug fixes</h3>
-                                    <ul>
-                                        <li>fix mouse element scaling</li>
-                                    </ul>
-                                    <br>
-                                    <h3>new config variables</h3>
-                                    <ul>
-                                        <li>added key gap modifier</li>
-                                        <li>added bold font checkbox</li>
-                                    </ul>
-                                    <br>
-                                    <h3>quality of life</h3>
-                                    <ul>
-                                        <li>invisible keys now support width classes <i>(key_escape:"invis":u2-25)</i>
-                                        </li>
-                                    </ul>
-                                    <br>
-
-                                    <!-- 2025-12-03 -->
-                                    <h1>2025-12-03</h1>
-                                    <br>
-                                    <h3>bug fixes</h3>
-                                    <ul>
-                                        <li>fix scale scaling wrong document element</li>
-                                        <li>fix mouse buttons not working outside the mouse row</li>
-                                        <li>fix fonts</li>
-                                    </ul>
-                                    <br>
-                                    <h3>quality of life</h3>
-                                    <ul>
-                                        <li>added a wider range of width classes (see cheat sheet)</li>
-                                        <li>mouse buttons support width classes including scroller</li>
-                                    </ul>
-                                    <br>
-
-                                    <!-- 2025-12-02 -->
-                                    <h1>2025-12-02</h1>
-                                    <br>
-                                    <h3>bug fixes</h3>
-                                    <ul>
-                                        <li>fix color pickers not updating when loading settings from url</li>
-                                        <li>fix copy button label inconsistency</li>
-                                        <li>fix text not being selectable</li>
-                                    </ul>
-                                    <br>
-                                    <h3>quality of life</h3>
-                                    <ul>
-                                        <li>add url cfg compression to save 50% size, legacy params should continue to
-                                            work
-                                            fine
-                                        </li>
-                                        <li>add "edit this layout" button inside the overlay mode that shows on mouse
-                                            hover
-                                        </li>
-                                        <li>rework how key states are handled to compare against an array of previous
-                                            websocket
-                                            messages to prevent stuck keys on unfocused or busy (lagging) browser src
-                                        </li>
-                                        <li>make sheet flyouts smaller</li>
-                                    </ul>
-                                    <br>
-
-                                    <!-- 2025-12-01 -->
-                                    <h1>2025-12-01</h1>
-                                    <br>
-                                    <h3>bug fixes</h3>
-                                    <ul>
-                                        <li>fix scroll label scale for good (?)</li>
-                                        <li>fix sheet flyouts</li>
-                                        <li>fix cheat sheet not scrolling</li>
-                                        <li>fix speed suffix being x instead of %</li>
-                                    </ul>
-                                    <br>
-                                    <h3>quality of life</h3>
-                                    <ul>
-                                        <li>added settings loading from url to allow sharing and loading of previously
-                                            configured urls</li>
-                                        <li>url bar now updates on settings change, this is useful to share unfinished
-                                            configurations (obs url still needs to be obtained through the copy button)
-                                        </li>
-                                    </ul>
-                                    <br>
-
-                                    <!-- 2025-11-30 -->
-                                    <h1>2025-11-30</h1>
-                                    <br>
-                                    <h3>bug fixes</h3>
-                                    <ul>
-                                        <li>fixed mouse label not scaling correctly inside its element.</li>
-                                        <li>added a dedicated "dummy" string to remove rows without needing
-                                            <code>invisible</code> tags.
-                                        </li>
-                                    </ul>
-                                    <br>
-                                    <h3>quality of life</h3>
-                                    <ul>
-                                        <li>added patch notes viewer.</li>
-                                        <li>added glow highlight indicating when the url has been updated.</li>
-                                        <li>separated scroll-up and scroll-down into distinct combo options.</li>
-                                        <li>mouse preview now works everywhere on the page.</li>
-                                        <li>default scroll arrows updated to a thicker style.</li>
-                                    </ul>
-                                    <br>
-                                    <h3>custom mouse row</h3>
-                                    <ul>
-                                        <li>added fully customizable mouse row.</li>
-                                        <li>implemented wide left mouse button: <code>mouse_left:"m1":mouse-wide</code>.
-                                        </li>
-                                        <li>added improved 3-label scroller: <code>scroller:"-":"↑":"↓"</code>.</li>
-                                        <li>added right mouse button: <code>mouse_right:"m2"</code>.</li>
-                                    </ul>
-                                    <br>
-                                    <h3>cheat sheets</h3>
-                                    <ul>
-                                        <li>added cheat sheet support for custom configuration elements.</li>
-                                    </ul>
-                                    <br>
-                                    <h3>key styling</h3>
-                                    <ul>
-                                        <li>refactored internal key width styling system.</li>
-                                    </ul>
-                                </div>
-                            </details>
+            <section class="cfg-panel">
+                <div class="cfg-panel-title">connection</div>
+                <div class="cfg-row cfg-row--2col">
+                    <div class="cfg-field">
+                        <label class="cfg-label" for="wsaddress">address</label>
+                        <input class="cfg-input config-input" id="wsaddress" type="text" value="localhost">
+                    </div>
+                    <div class="cfg-field">
+                        <label class="cfg-label" for="wsport">port</label>
+                        <input class="cfg-input config-input" id="wsport" type="number" value="16899">
+                    </div>
+                </div>
+                <div class="cfg-field">
+                    <label class="cfg-label" for="wsauth">auth token</label>
+                    <input class="cfg-input config-input" id="wsauth" type="text"
+                        placeholder="paste your auth token here">
+                </div>
+                <div class="cfg-field" style="margin-top:10px;">
+                    <label class="cfg-label" for="generatedlink">obs browser source url</label>
+                    <div class="link-container">
+                        <input class="cfg-input" id="generatedlink" type="text" readonly>
+                    </div>
+                </div>
+                <div class="cfg-row cfg-row--2col" style="margin-top:8px;">
+                    <button class="cfg-btn" id="loadbtn">⟳ load url</button>
+                    <button class="cfg-btn cfg-btn--accent" id="copybtn">⎘ copy url</button>
+                </div>
+            </section>
+            <div class="cfg-flyouts">
+                <div class="cfg-accordion">
+                    <input type="checkbox" class="cfg-accordion-toggle" id="acc-instructions" checked>
+                    <label class="cfg-accordion-label" for="acc-instructions">instructions</label>
+                    <div class="cfg-accordion-content">
+                        <div class="cfg-accordion-inner instructions">
+                            <h1>Option #1 (recommended)</h1>
+                            <ol>
+                                <li>get the <a href="https://github.com/girlglock/input-overlay/releases"
+                                        target="_blank">input-overlay-ws</a> server</li>
+                                <li>run it and right click the tray icon to copy your auth token</li>
+                                <li>paste the token in the auth token field below</li>
+                                <li>configure your overlay, then copy the URL and paste it as an OBS browser source</li>
+                                <ul style="margin-top:8px;">
+                                    <li>tip: edit <code>config.json</code> to change the address/port</li>
+                                    <li>tip: configure the key whitelist in the server settings</li>
+                                </ul>
+                                <blockquote class="note note--green">🛈 Supports hall effect keyboards via the server
+                                    settings.</blockquote>
+                            </ol>
+                            <h1>Option #2</h1>
+                            <ol>
+                                <li>install the <a href="https://github.com/univrsal/input-overlay"
+                                        target="_blank">input-overlay OBS plugin</a></li>
+                                <li>enable the websocket server in plugin settings</li>
+                                <li>restart OBS, copy the overlay URL, add it as a browser source</li>
+                                <blockquote class="note note--red">🛈 Easier setup but no authentication support.
+                                </blockquote>
+                            </ol>
                         </div>
-                    </fieldset>
-                    <fieldset class="cs-fieldset" style="max-height: 230px;">
-                        <legend>connection</legend>
-                        <div class="nested-grid-2">
-                            <div class="cs-form-group">
-                                <label class="cs-input__label" for="wsaddress">address</label>
-                                <input class="cs-input config-input" id="wsaddress" type="text" value="localhost">
-                            </div>
-                            <div class="cs-form-group">
-                                <label class="cs-input__label" for="wsport">port</label>
-                                <input class="cs-input config-input" id="wsport" type="number" value="16899">
+                    </div>
+                </div>
+                <div class="cfg-accordion">
+                    <input type="checkbox" class="cfg-accordion-toggle" id="acc-cheatsheet">
+                    <label class="cfg-accordion-label" for="acc-cheatsheet">cheat sheet</label>
+                    <div class="cfg-accordion-content">
+                        <div class="cfg-accordion-inner" style="padding-top: 8px;">
+                            <h2>key syntax</h2>
+                            <p>Comma-separated entries per row. Basic format:</p>
+                            <blockquote class="note note--purple"><code>[internal_name]:"[label]":[width class]</code>
+                            </blockquote>
+
+                            <h3>multi-key bindings</h3>
+                            <blockquote class="note note--purple">
+                                <code>key_w|mouse_4:"W"</code> - both W and mouse4 light up the same key<br>
+                                <code>key_q|key_e:"use"</code> - Q or E both trigger "use"
+                            </blockquote>
+
+                            <h3>standard keys</h3>
+                            <table class="key-list-table">
+                                <thead>
+                                    <tr>
+                                        <th>label</th>
+                                        <th>internal name</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>a-z</td>
+                                        <td><code>key_a</code> - <code>key_z</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>0-9</td>
+                                        <td><code>key_0</code> - <code>key_9</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>` - = [ ] \ ; ' , . /</td>
+                                        <td><code>key_backtick</code>, <code>key_minus</code>, <code>key_equals</code>…
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <h3>special keys</h3>
+                            <table class="key-list-table">
+                                <thead>
+                                    <tr>
+                                        <th>label</th>
+                                        <th>internal name</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>esc, tab, caps</td>
+                                        <td><code>key_escape</code>, <code>key_tab</code>, <code>key_capslock</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>shift / ctrl / alt (L/R)</td>
+                                        <td><code>key_leftshift</code>, <code>key_rightshift</code>, etc.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>space, enter, backspace</td>
+                                        <td><code>key_space</code>, <code>key_enter</code>, <code>key_backspace</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>arrows</td>
+                                        <td><code>key_leftarrow</code>, <code>key_uparrow</code>,
+                                            <code>key_rightarrow</code>, <code>key_downarrow</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>f1-f12</td>
+                                        <td><code>key_f1</code> - <code>key_f12</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>ins, del, home, end, pgup, pgdn</td>
+                                        <td><code>key_insert</code>, <code>key_delete</code>, <code>key_home</code>,
+                                            <code>key_end</code>, <code>key_pageup</code>, <code>key_pagedown</code>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>numpad 0-9</td>
+                                        <td><code>key_numpad_0</code> - <code>key_numpad_9</code></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <h3>mouse identifiers</h3>
+                            <table class="key-list-table">
+                                <thead>
+                                    <tr>
+                                        <th>label</th>
+                                        <th>internal name</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>m1 (left)</td>
+                                        <td><code>mouse_left</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>m2 (right)</td>
+                                        <td><code>mouse_right</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>m3 (middle)</td>
+                                        <td><code>mouse_middle</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>m4, m5</td>
+                                        <td><code>mouse_4</code>, <code>mouse_5</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>scroller</td>
+                                        <td><code>scroller:"default":"up":"down"</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td>side buttons</td>
+                                        <td><code>mouse_side:"m5":"m4"</code></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <h3>width classes</h3>
+                            <blockquote class="note note--purple"><code>u0-01</code> through <code>u7</code> in 0.01u
+                                increments</blockquote>
+
+                            <h3>special syntax</h3>
+                            <table class="key-list-table">
+                                <thead>
+                                    <tr>
+                                        <th>syntax</th>
+                                        <th>effect</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>invisible</code> / <code>key_escape:"invis":u2</code></td>
+                                        <td>invisible spacer (supports width classes)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>dummy</code></td>
+                                        <td>empty row placeholder</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>key_a|key_b:"A"</code></td>
+                                        <td>multi-key binding via pipe</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="cfg-accordion">
+                    <input type="checkbox" class="cfg-accordion-toggle" id="acc-patchnotes">
+                    <label class="cfg-accordion-label" for="acc-patchnotes">patch notes</label>
+                    <div class="cfg-accordion-content">
+                        <div class="cfg-accordion-inner patchnotes">
+                            <h1>2026-03-18</h1>
+                            <h3>quality of life</h3>
+                            <ul>
+                                <li>added analogsense js sdk for live key preview</li>
+                                <li>added analog mode-specific settings (key legend fill modes)</li>
+                                <li>added force-disable analog option</li>
+                            </ul>
+                            <h3>bug fixes</h3>
+                            <ul>
+                                <li>removed transition times from analog_depth css events causing visible lag</li>
+                                <li>interpolated analog_depth to compensate for removed transitions</li>
+                            </ul>
+                            <h1>2026-03-15</h1>
+                            <h3>new server</h3>
+                            <ul>
+                                <li>added more complex ws server with settings window and analog keyboard support</li>
+                            </ul>
+                            <h1>2025-12-27</h1>
+                            <h3>quality of life</h3>
+                            <ul>
+                                <li>added presets dropdown</li>
+                                <li>added img tag support in key labels</li>
+                                <li>added + button for adding keys to rows</li>
+                            </ul>
+                            <h1>2025-12-06</h1>
+                            <h3>bug fixes</h3>
+                            <ul>
+                                <li>fix mouse_4 and mouse_5 elements</li>
+                                <li>fix stuck key logic on unfocused browser sources</li>
+                            </ul>
+                            <h1>2025-12-04</h1>
+                            <h3>new config vars</h3>
+                            <ul>
+                                <li>key gap modifier</li>
+                                <li>bold font checkbox</li>
+                            </ul>
+                            <h1>2025-12-02</h1>
+                            <h3>quality of life</h3>
+                            <ul>
+                                <li>url cfg compression (50% smaller)</li>
+                                <li>"edit this layout" button in overlay mode</li>
+                            </ul>
+                            <h1>2025-11-30</h1>
+                            <h3>quality of life</h3>
+                            <ul>
+                                <li>patch notes viewer</li>
+                                <li>separate scroll up/down</li>
+                                <li>fully customizable mouse row</li>
+                                <li>cheat sheet</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+        <main class="cfg-main">
+            <section class="cfg-panel cfg-preview-panel">
+                <div class="cfg-panel-title">live preview</div>
+                <div class="preview-wrapper" id="preview-wrapper">
+                    <video class="preview-bg" autoplay muted loop playsinline id="bgvideo">
+                        <source src="" id="bgsource" type="video/mp4">
+                    </video>
+                    <div style="scale: 0.75; display:flex; align-items:center; justify-content:center;">
+                        <div class="preview-container">
+                            <div id="preview-keyboard" class="keyboard-section"></div>
+                            <div id="preview-mouse" class="mouse-section"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <div class="cfg-unified">
+                <div class="cfg-row1">
+                    <div class="cfg-section">
+                        <div class="cfg-section-title">colors<div class="cs-hr"></div>
+                        </div>
+                        <div class="cfg-field">
+                            <label class="cfg-label" for="activecolorhex">glow color</label>
+                            <div class="color-input-group">
+                                <div id="activecolor" class="config-input pickr-target" data-initial-color="#8b5cf6">
+                                </div>
+                                <input id="activecolorhex"
+                                    class="cfg-input cfg-input--color config-input color-hex-input" type="text"
+                                    maxlength="9" value="#8b5cf6">
                             </div>
                         </div>
-                        <div class="cs-form-group">
-                            <label class="cs-input__label" for="wsauth">auth token</label>
-                            <input class="cs-input config-input" id="wsauth" type="text"
-                                placeholder="websocket auth token">
-                        </div>
-                        <div class="cs-form-group" style="margin-top: 10px;">
-                            <label class="cs-input__label" for="generatedlink" style="display: block;">obs
-                                browser source
-                                url</label>
-                            <div class="link-container" style="gap: 10px;">
-                                <input class="cs-input" id="generatedlink" type="text">
+                        <div class="cfg-slider-pair">
+                            <div class="cfg-field">
+                                <label class="cfg-label" for="activebgcolorhex">active key bg</label>
+                                <div class="color-input-group">
+                                    <div id="activebgcolor" class="config-input pickr-target"
+                                        data-initial-color="#202020">
+                                    </div>
+                                    <input id="activebgcolorhex"
+                                        class="cfg-input cfg-input--color config-input color-hex-input" type="text"
+                                        maxlength="9" value="#202020">
+                                </div>
+                            </div>
+                            <div class="cfg-field">
+                                <label class="cfg-label" for="backgroundcolorhex">inactive key bg</label>
+                                <div class="color-input-group">
+                                    <div id="backgroundcolor" class="config-input pickr-target"
+                                        data-initial-color="#1a1a1ad1"></div>
+                                    <input id="backgroundcolorhex"
+                                        class="cfg-input cfg-input--color config-input color-hex-input" type="text"
+                                        maxlength="9" value="#1a1a1ad1">
+                                </div>
                             </div>
                         </div>
-                        <div class="nested-grid-2" style="margin-top: 10px;">
-                            <button class="cs-btn" id="loadbtn" style="min-width: 88px;">⟳ load url</button>
-                            <button class="cs-btn" id="copybtn" style="min-width: 88px;">⎘ copy url</button>
+                        <div class="cfg-field">
+                            <label class="cfg-label" for="outlinecolorhex">outline color</label>
+                            <div class="color-input-group">
+                                <div id="outlinecolor" class="config-input pickr-target" data-initial-color="#4f4f4f">
+                                </div>
+                                <input id="outlinecolorhex"
+                                    class="cfg-input cfg-input--color config-input color-hex-input" type="text"
+                                    maxlength="9" value="#4f4f4f">
+                            </div>
                         </div>
-                    </fieldset>
-                    <fieldset class="cs-fieldset">
-                        <legend>custom layout</legend>
-                        <div class="nested-grid-1">
-                            <div class="cs-form-group">
-                                <label class="cs-input__label" for="layoutPresets"
-                                    style="display: block;">TEMPLATES</label>
-                                <select class="cs-select" id="layoutPresets" style="max-height: 26px;">
-                                    <option value="0" selected>-</option>
+                        <div class="cfg-slider-pair">
+                            <div class="cfg-field">
+                                <label class="cfg-label" for="fontcolorhex">active font color</label>
+                                <div class="color-input-group">
+                                    <div id="fontcolor" class="config-input pickr-target" data-initial-color="#ffffff">
+                                    </div>
+                                    <input id="fontcolorhex"
+                                        class="cfg-input cfg-input--color config-input color-hex-input" type="text"
+                                        maxlength="9" value="#ffffff">
+                                </div>
+                            </div>
+                            <div class="cfg-field">
+                                <label class="cfg-label" for="inactivecolorhex">inactive font color</label>
+                                <div class="color-input-group">
+                                    <div id="inactivecolor" class="config-input pickr-target"
+                                        data-initial-color="#808080">
+                                    </div>
+                                    <input id="inactivecolorhex"
+                                        class="cfg-input cfg-input--color config-input color-hex-input" type="text"
+                                        maxlength="9" value="#808080">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cfg-section">
+                        <div class="cfg-section-title">animation &amp; sizing
+                            <div class="cs-hr"></div>
+                        </div>
+                        <div class="cfg-slider-field">
+                            <div class="cfg-slider-header">
+                                <label class="cfg-label" for="glowradius">glow radius</label>
+                                <span class="cfg-slider-val" id="glowradiusvalue">24px</span>
+                            </div>
+                            <input id="glowradius" class="cfg-range config-input" type="range" max="80" min="0" step="2"
+                                value="24">
+                        </div>
+                        <div class="cfg-slider-field">
+                            <div class="cfg-slider-header">
+                                <label class="cfg-label" for="borderradius">border radius</label>
+                                <span class="cfg-slider-val" id="borderradiusvalue">8px</span>
+                            </div>
+                            <input id="borderradius" class="cfg-range config-input" type="range" max="40" min="0"
+                                step="1" value="8">
+                        </div>
+                        <div class="cfg-slider-field">
+                            <div class="cfg-slider-header">
+                                <label class="cfg-label" for="pressscale">press scale</label>
+                                <span class="cfg-slider-val" id="pressscalevalue">1.05x</span>
+                            </div>
+                            <input id="pressscale" class="cfg-range config-input" type="range" max="300" min="0"
+                                step="5" value="100">
+                        </div>
+                        <div class="cfg-slider-field">
+                            <div class="cfg-slider-header">
+                                <label class="cfg-label" for="animationspeed">anim speed</label>
+                                <span class="cfg-slider-val" id="animationspeedvalue">1.0x</span>
+                            </div>
+                            <input id="animationspeed" class="cfg-range config-input" type="range" max="300" min="0"
+                                step="10" value="100">
+                        </div>
+                        <div class="cfg-slider-pair">
+                            <div class="cfg-slider-field">
+                                <div class="cfg-slider-header">
+                                    <label class="cfg-label" for="outlinescaleunpressed">outline (unpressed)</label>
+                                    <span class="cfg-slider-val" id="outlinescaleunpressedvalue">2px</span>
+                                </div>
+                                <input id="outlinescaleunpressed" class="cfg-range config-input" type="range" max="10"
+                                    min="0" step="0.25" value="2">
+                            </div>
+                            <div class="cfg-slider-field">
+                                <div class="cfg-slider-header">
+                                    <label class="cfg-label" for="outlinescalepressed">outline (pressed)</label>
+                                    <span class="cfg-slider-val" id="outlinescalepressedvalue">2px</span>
+                                </div>
+                                <input id="outlinescalepressed" class="cfg-range config-input" type="range" max="10"
+                                    min="0" step="0.25" value="2">
+                            </div>
+                        </div>
+                        <div class="cfg-slider-field">
+                            <div class="cfg-slider-header">
+                                <label class="cfg-label" for="gapmodifier">key gap</label>
+                                <span class="cfg-slider-val" id="gapmodifiervalue">100%</span>
+                            </div>
+                            <input id="gapmodifier" class="cfg-range config-input" type="range" max="300" min="1"
+                                step="1" value="100">
+                        </div>
+                    </div>
+                    <div class="cfg-section">
+                        <div class="cfg-section-title">font &amp; options
+                            <div class="cs-hr"></div>
+                        </div>
+                        <div class="cfg-field">
+                            <label class="cfg-label" for="fontfamily">font family</label>
+                            <select class="cfg-select config-input" id="fontfamily">
+                                <option value="lato">system default</option>
+                                <option value="Borevs">Borevs</option>
+                                <option value="bitcount-prop-single">Bitcount Prop Single</option>
+                                <option value="bungee">Bungee</option>
+                                <option value="comfortaa">Comfortaa</option>
+                                <option value="fredoka">Fredoka</option>
+                                <option value="lexend">Lexend</option>
+                                <option value="lexend-giga">Lexend Giga</option>
+                                <option value="lilita-one">Lilita One</option>
+                                <option value="press-start-2p">Press Start 2P</option>
+                                <option value="smooch-sans">Smooch Sans</option>
+                                <option value="sora">Sora</option>
+                                <option value="special-elite">Special Elite</option>
+                                <option value="abel">Abel</option>
+                                <option value="archivo-black">Archivo Black</option>
+                                <option value="arimo">Arimo</option>
+                                <option value="bebas-neue">Bebas Neue</option>
+                                <option value="caveat-brush">Caveat Brush</option>
+                                <option value="chewy">Chewy</option>
+                                <option value="cinzel">Cinzel</option>
+                                <option value="fjalla-one">Fjalla One</option>
+                                <option value="inter">Inter</option>
+                                <option value="josefin-sans">Josefin Sans</option>
+                                <option value="knewave">Knewave</option>
+                                <option value="lato">Lato</option>
+                                <option value="montserrat">Montserrat</option>
+                                <option value="noto-sans">Noto Sans</option>
+                                <option value="open-sans">Open Sans</option>
+                                <option value="orbitron">Orbitron</option>
+                                <option value="oswald">Oswald</option>
+                                <option value="pacifico">Pacifico</option>
+                                <option value="raleway">Raleway</option>
+                                <option value="roboto-condensed">Roboto Condensed</option>
+                                <option value="roboto-mono">Roboto Mono</option>
+                                <option value="roboto">Roboto</option>
+                                <option value="share-tech">Share Tech</option>
+                                <option value="titan-one">Titan One</option>
+                                <option value="ubuntu">Ubuntu</option>
+                            </select>
+                        </div>
+                        <div class="cfg-checkboxes">
+                            <div style="display: flex; gap: 10px">
+                                <label class="cfg-checkbox">
+                                    <input type="checkbox" checked class="config-input" id="boldfont">
+                                    <span class="cfg-checkbox-box"></span>
+                                    <span class="cfg-checkbox-label">bold font</span>
+                                </label>
+                                <label class="cfg-checkbox">
+                                    <input type="checkbox" class="config-input" id="hidemouse">
+                                    <span class="cfg-checkbox-box"></span>
+                                    <span class="cfg-checkbox-label">hide mouse buttons</span>
+                                </label>
+                                <label class="cfg-checkbox">
+                                    <input type="checkbox" class="config-input" id="hidescrollcombo">
+                                    <span class="cfg-checkbox-box"></span>
+                                    <span class="cfg-checkbox-label">hide scroll combo</span>
+                                </label>
+                            </div>
+                            <div class="cfg-section-title" style="margin-top: 20px;">analog<div class="cs-hr"></div>
+                            </div>
+                            <div class="cfg-slider-pair">
+                                <div class="cfg-field">
+                                    <label class="cfg-label">live preview device</label>
+                                    <button class="cfg-btn" id="analogconnectbtn"
+                                        style="width:100%;height:41%;text-align: center;">⊕
+                                        connect
+                                        device</button>
+                                    <div id="analogstatus" class="cfg-analog-status"></div>
+                                </div>
+                                <div class="cfg-field">
+                                    <label class="cfg-label" for="keylegendmode">legend fill mode</label>
+                                    <select class="cfg-select config-input" id="keylegendmode">
+                                        <option value="fading">fading</option>
+                                        <option value="inverting">inverting</option>
+                                        <option value="digital">digital</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="cfg-checkboxes" style="margin-top:8px;">
+                                <label class="cfg-checkbox">
+                                    <input type="checkbox" class="config-input" id="forcedisableanalog">
+                                    <span class="cfg-checkbox-box"></span>
+                                    <span class="cfg-checkbox-label">force disable analog</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="cfg-row2">
+                    <div class="cfg-section cfg-section--full">
+                        <div class="cfg-section-title cfg-layout-title-row">
+                            <div class="cfg-field cfg-layout-presets-inline">
+                                <label class="cfg-label" for="layoutPresets">preset</label>
+                                <select class="cfg-select" id="layoutPresets">
+                                    <option value="0" selected>choose</option>
                                     <option
                                         value="https://overlay.girlglock.com?cfg=eNplj99KwzAUxt_lXORqg6Z_NjnQizo3FDbQOfBS0jTtwrKmNu3GHkB8DPENfQSTZsh0PdB8-ZLvd04Y7-RBcK10mya8nEwLImt2Yd4ErkjO-K5qdV8X3qbMVZ4QfzevvB1P82JCie47JeszIS5dkVLXnTfK4SOV0sc0jEnLCtmbNCBNK4wxnCmRUhoQ0whRpFEQkIo1e13IUgrb2O5zrQqHSynhven0fslOtuVaH2m6E6dXYSGNQJD1QRoYOYsiUK9ChNCrCCHyKkaI4T8rHFgdyxE22S1gT8fJcPsN4cnnjggvXtluc69ahPUVKxpYSpSd2cqyQ3i-f1hsLDMcMgwh82ljj7wqEO68KhEWV8Tkl8i7ViHMNuvlxYzugCnbKFtuLmzTMG5HfX7MZnNrR-Mo-gNe6d6IdO_-AwJhRd2U43g6MrzVSgn7vlUECN-fX-9--YCRT7Sy2rpIeI78AJYqzXQ">
                                         qwerty</option>
@@ -773,326 +597,69 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="cs-form-group">
-                            <label class="cs-input__label" for="customLayoutRow1">top row</label>
-                            <div class="nested-grid-2" style="grid-template-columns: repeat(2, 86%); margin-top: 0;">
-                                <textarea class="cs-input config-input" id="customLayoutRow1" rows="2"
-                                    spellcheck="false"></textarea>
-                                <button class="cs-btn" style="max-width: 40px;" id="addKey1">+</button>
+                        <div class="cs-hr"></div>
+                        <div class="cfg-layout-rows">
+                            <div class="cfg-layout-row-field">
+                                <label class="cfg-label" for="customLayoutRow1">top row</label>
+                                <div class="cfg-row-input">
+                                    <textarea class="cfg-textarea config-input" id="customLayoutRow1" rows="2"
+                                        spellcheck="false"></textarea>
+                                    <button class="cfg-addbtn" id="addKey1" title="Add key">+</button>
+                                </div>
+                            </div>
+                            <div class="cfg-layout-row-field">
+                                <label class="cfg-label" for="customLayoutRow2">qwerty row</label>
+                                <div class="cfg-row-input">
+                                    <textarea class="cfg-textarea config-input" id="customLayoutRow2" rows="2"
+                                        spellcheck="false"></textarea>
+                                    <button class="cfg-addbtn" id="addKey2" title="Add key">+</button>
+                                </div>
+                            </div>
+                            <div class="cfg-layout-row-field">
+                                <label class="cfg-label" for="customLayoutRow3">asdf row</label>
+                                <div class="cfg-row-input">
+                                    <textarea class="cfg-textarea config-input" id="customLayoutRow3" rows="2"
+                                        spellcheck="false"></textarea>
+                                    <button class="cfg-addbtn" id="addKey3" title="Add key">+</button>
+                                </div>
+                            </div>
+                            <div class="cfg-layout-row-field">
+                                <label class="cfg-label" for="customLayoutRow4">zxcv row</label>
+                                <div class="cfg-row-input">
+                                    <textarea class="cfg-textarea config-input" id="customLayoutRow4" rows="2"
+                                        spellcheck="false"></textarea>
+                                    <button class="cfg-addbtn" id="addKey4" title="Add key">+</button>
+                                </div>
+                            </div>
+                            <div class="cfg-layout-row-field">
+                                <label class="cfg-label" for="customLayoutRow5">space row</label>
+                                <div class="cfg-row-input">
+                                    <textarea class="cfg-textarea config-input" id="customLayoutRow5" rows="2"
+                                        spellcheck="false"></textarea>
+                                    <button class="cfg-addbtn" id="addKey5" title="Add key">+</button>
+                                </div>
+                            </div>
+                            <div class="cfg-layout-row-field">
+                                <label class="cfg-label" for="customLayoutMouse">mouse row</label>
+                                <div class="cfg-row-input">
+                                    <textarea class="cfg-textarea config-input" id="customLayoutMouse" rows="2"
+                                        spellcheck="false"></textarea>
+                                    <button class="cfg-addbtn" id="addKeyMouse" title="Add key">+</button>
+                                </div>
                             </div>
                         </div>
-                        <div class="cs-form-group">
-                            <label class="cs-input__label" for="customLayoutRow2">qwery row</label>
-                            <div class="nested-grid-2" style="grid-template-columns: repeat(2, 86%); margin-top: 0;">
-                                <textarea class="cs-input config-input" id="customLayoutRow2" rows="2"
-                                    spellcheck="false"></textarea>
-                                <button class="cs-btn" style="max-width: 40px;" id="addKey2">+</button>
-                            </div>
-                        </div>
-                        <div class="cs-form-group">
-                            <label class="cs-input__label" for="customLayoutRow3">asdf row</label>
-                            <div class="nested-grid-2" style="grid-template-columns: repeat(2, 86%); margin-top: 0;">
-                                <textarea class="cs-input config-input" id="customLayoutRow3" rows="2"
-                                    spellcheck="false"></textarea>
-                                <button class="cs-btn" style="max-width: 40px;" id="addKey3">+</button>
-                            </div>
-                        </div>
-                        <div class="cs-form-group">
-                            <label class="cs-input__label" for="customLayoutRow4">zxcv row</label>
-                            <div class="nested-grid-2" style="grid-template-columns: repeat(2, 86%); margin-top: 0;">
-                                <textarea class="cs-input config-input" id="customLayoutRow4" rows="2"
-                                    spellcheck="false"></textarea>
-                                <button class="cs-btn" style="max-width: 40px;" id="addKey4">+</button>
-                            </div>
-                        </div>
-                        <div class="cs-form-group">
-                            <label class="cs-input__label" for="customLayoutRow5">space row</label>
-                            <div class="nested-grid-2" style="grid-template-columns: repeat(2, 86%); margin-top: 0;">
-                                <textarea class="cs-input config-input" id="customLayoutRow5" rows="2"
-                                    spellcheck="false"></textarea>
-                                <button class="cs-btn" style="max-width: 40px;" id="addKey5">+</button>
-                            </div>
-                        </div>
-                        <div class="cs-form-group">
-                            <label class="cs-input__label" for="customLayoutMouse">mouse row</label>
-                            <div class="nested-grid-2" style="grid-template-columns: repeat(2, 86%); margin-top: 0;">
-                                <textarea class="cs-input config-input" id="customLayoutMouse" rows="2"
-                                    spellcheck="false"></textarea>
-                                <button class="cs-btn" style="max-width: 40px;" id="addKeyMouse">+</button>
-                            </div>
-                        </div>
-                    </fieldset>
+                    </div>
                 </div>
-                <div class="config-column">
-                    <fieldset class="cs-fieldset preview-fieldset">
-                        <legend>live preview</legend>
-                        <div class="preview-wrapper" id="preview-wrapper">
-                            <video class="preview-bg" autoplay muted loop playsinline id="bgvideo">
-                                <source src="" id="bgsource" type="video/mp4">
-                            </video>
-                            <div style="scale: 0.75;">
-                                <div class="preview-container">
-                                    <div id="preview-keyboard" class="keyboard-section"></div>
-                                    <div id="preview-mouse" class="mouse-section"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </fieldset>
-                    <fieldset class="cs-fieldset">
-                        <legend>style & animation</legend>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; align-items: start;">
 
-                            <!-- colors -->
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <div class="cs-form-group">
-                                    <label class="cs-input__label" for="activecolorhex">glow color</label>
-                                    <div class="color-input-group">
-                                        <div id="activecolor" class="config-input pickr-target"
-                                            data-initial-color="#8b5cf6"></div>
-                                        <input id="activecolorhex" class="cs-input config-input color-hex-input"
-                                            type="text" maxlength="9" value="#8b5cf6">
-                                    </div>
-                                </div>
-                                <div class="cs-form-group">
-                                    <label class="cs-input__label" for="backgroundcolorhex">inactive key bg</label>
-                                    <div class="color-input-group">
-                                        <div id="backgroundcolor" class="config-input pickr-target"
-                                            data-initial-color="#1a1a1ad1"></div>
-                                        <input id="backgroundcolorhex" class="cs-input config-input color-hex-input"
-                                            type="text" maxlength="9" value="#1a1a1ad1">
-                                    </div>
-                                </div>
-                                <div class="cs-form-group">
-                                    <label class="cs-input__label" for="activebgcolorhex">active key bg</label>
-                                    <div class="color-input-group">
-                                        <div id="activebgcolor" class="config-input pickr-target"
-                                            data-initial-color="#202020"></div>
-                                        <input id="activebgcolorhex" class="cs-input config-input color-hex-input"
-                                            type="text" maxlength="9" value="#202020">
-                                    </div>
-                                </div>
-                                <div class="cs-form-group">
-                                    <label class="cs-input__label" for="outlinecolorhex">outline color</label>
-                                    <div class="color-input-group">
-                                        <div id="outlinecolor" class="config-input pickr-target"
-                                            data-initial-color="#4f4f4f"></div>
-                                        <input id="outlinecolorhex" class="cs-input config-input color-hex-input"
-                                            type="text" maxlength="9" value="#4f4f4f">
-                                    </div>
-                                </div>
-                                <div class="cs-form-group">
-                                    <label class="cs-input__label" for="fontcolorhex">active font color</label>
-                                    <div class="color-input-group">
-                                        <div id="fontcolor" class="config-input pickr-target"
-                                            data-initial-color="#ffffff"></div>
-                                        <input id="fontcolorhex" class="cs-input config-input color-hex-input"
-                                            type="text" maxlength="9" value="#ffffff">
-                                    </div>
-                                </div>
-                                <div class="cs-form-group">
-                                    <label class="cs-input__label" for="inactivecolorhex">inactive font color</label>
-                                    <div class="color-input-group">
-                                        <div id="inactivecolor" class="config-input pickr-target"
-                                            data-initial-color="#808080"></div>
-                                        <input id="inactivecolorhex" class="cs-input config-input color-hex-input"
-                                            type="text" maxlength="9" value="#808080">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- sliders -->
-                            <div style="display: flex; flex-direction: column; gap: 13px;">
-                                <div style="display: flex; gap: 8px;">
-                                    <div class="cs-slider" style="flex: 1; min-width: 0;">
-                                        <div id="glowradiusvalue" class="value">24px</div>
-                                        <div class="cs-ruler"></div>
-                                        <input id="glowradius" class="config-input" max="80" min="0" step="2"
-                                            type="range" value="24">
-                                        <label for="glowradius">glow radius</label>
-                                    </div>
-                                    <div class="cs-slider" style="flex: 1; min-width: 0;">
-                                        <div id="borderradiusvalue" class="value">8px</div>
-                                        <div class="cs-ruler"></div>
-                                        <input id="borderradius" class="config-input" max="40" min="0" step="1"
-                                            type="range" value="8">
-                                        <label for="borderradius">border radius</label>
-                                    </div>
-                                </div>
-                                <div style="display: flex; gap: 8px;">
-                                    <div class="cs-slider" style="flex: 1; min-width: 0;">
-                                        <div id="pressscalevalue" class="value">1.05x</div>
-                                        <div class="cs-ruler"></div>
-                                        <input id="pressscale" class="config-input" max="300" min="0" step="5"
-                                            type="range" value="100">
-                                        <label for="pressscale">press scale</label>
-                                    </div>
-                                    <div class="cs-slider" style="flex: 1; min-width: 0;">
-                                        <div id="animationspeedvalue" class="value">1.0x</div>
-                                        <div class="cs-ruler"></div>
-                                        <input id="animationspeed" class="config-input" max="300" min="0" step="10"
-                                            type="range" value="100">
-                                        <label for="animationspeed">speed</label>
-                                    </div>
-                                </div>
-                                <div style="display: flex; gap: 8px;">
-                                    <div class="cs-slider" style="flex: 1; min-width: 0;">
-                                        <div id="outlinescaleunpressedvalue" class="value">2px</div>
-                                        <div class="cs-ruler"></div>
-                                        <input id="outlinescaleunpressed" class="config-input" max="10" min="0"
-                                            step="0.25" type="range" value="2">
-                                        <label for="outlinescaleunpressed">outline unpressed</label>
-                                    </div>
-                                    <div class="cs-slider" style="flex: 1; min-width: 0;">
-                                        <div id="outlinescalepressedvalue" class="value">2px</div>
-                                        <div class="cs-ruler"></div>
-                                        <input id="outlinescalepressed" class="config-input" max="10" min="0"
-                                            step="0.25" type="range" value="2">
-                                        <label for="outlinescalepressed">outline pressed</label>
-                                    </div>
-                                </div>
-                                <div style="display: flex; gap: 8px;">
-                                    <div class="cs-slider" style="flex: 1; min-width: 0;">
-                                        <div id="gapmodifiervalue" class="value">100%</div>
-                                        <div class="cs-ruler"></div>
-                                        <input id="gapmodifier" class="config-input" max="300" min="1" step="1"
-                                            type="range" value="100">
-                                        <label for="gapmodifier">gap</label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- checkboxes -->
-                            <div style="display: flex; flex-direction: column; gap: 1px;">
-                                <div class="cs-form-group">
-                                    <label class="cs-input__label" for="fontfamily">font family</label>
-                                    <select class="cs-select config-input" id="fontfamily"
-                                        style="max-height: 22px; font-size: 12px; margin-top:4px">
-                                        <option value="">system default</option>
-                                        <option value="Borevs">Borevs</option>
-                                        <option value="bitcount-prop-single">Bitcount Prop Single</option>
-                                        <option value="bungee">Bungee</option>
-                                        <option value="comfortaa">Comfortaa</option>
-                                        <option value="fredoka">Fredoka</option>
-                                        <option value="lexend">Lexend</option>
-                                        <option value="lexend-giga">Lexend Giga</option>
-                                        <option value="lilita-one">Lilita One</option>
-                                        <option value="press-start-2p">Press Start 2P</option>
-                                        <option value="smooch-sans">Smooch Sans</option>
-                                        <option value="sora">Sora</option>
-                                        <option value="special-elite">Special Elite</option>
-                                        <option value="abel">Abel
-                                        </option>
-                                        <option value="archivo-black">
-                                            Archivo Black</option>
-                                        <option value="arimo">
-                                            Arimo</option>
-                                        <option value="bebas-neue">
-                                            Bebas Neue</option>
-                                        <option value="caveat-brush">
-                                            Caveat Brush</option>
-                                        <option value="chewy">Chewy
-                                        </option>
-                                        <option value="cinzel">
-                                            Cinzel</option>
-                                        <option value="fjalla-one">
-                                            Fjalla One</option>
-                                        <option value="inter">
-                                            Inter</option>
-                                        <option value="josefin-sans">
-                                            Josefin Sans</option>
-                                        <option value="knewave">
-                                            Knewave</option>
-                                        <option value="lato">
-                                            Lato</option>
-                                        <option value="montserrat">
-                                            Montserrat</option>
-                                        <option value="noto-sans">
-                                            Noto Sans</option>
-                                        <option value="open-sans">
-                                            Open Sans</option>
-                                        <option value="orbitron">
-                                            Orbitron</option>
-                                        <option value="oswald">
-                                            Oswald</option>
-                                        <option value="pacifico">
-                                            Pacifico</option>
-                                        <option value="raleway">
-                                            Raleway</option>
-                                        <option value="roboto-condensed">
-                                            Roboto Condensed</option>
-                                        <option value="roboto-mono">
-                                            Roboto Mono</option>
-                                        <option value="roboto">
-                                            Roboto</option>
-                                        <option value="share-tech">
-                                            Share Tech</option>
-                                        <option value="titan-one">
-                                            Titan One</option>
-                                        <option value="ubuntu">
-                                            Ubuntu</option>
-                                    </select>
-                                </div>
-                                <div class="cs-form-group">
-                                    <div class="cs-checkbox">
-                                        <input type="checkbox" checked class="config-input" id="boldfont">
-                                        <label for="boldfont" class="cs-checkbox__label">bold font</label>
-                                    </div>
-                                </div>
-                                <div class="cs-form-group">
-                                    <div class="cs-checkbox">
-                                        <input type="checkbox" class="config-input" id="hidemouse">
-                                        <label for="hidemouse" class="cs-checkbox__label">hide mouse buttons</label>
-                                    </div>
-                                </div>
-                                <div class="cs-form-group">
-                                    <div class="cs-checkbox">
-                                        <input type="checkbox" class="config-input" id="hidescrollcombo">
-                                        <label for="hidescrollcombo" class="cs-checkbox__label">hide scroll
-                                            combo</label>
-                                    </div>
-                                </div>
-                                <fieldset class="cs-fieldset">
-                                    <legend>Analog stuff</legend>
-                                    <div class="nested-grid-1">
-                                        <div class="cs-form-group" style="margin-top: -20px;">
-                                            <label class="cs-input__label" for="keylegendmode">key legend mode</label>
-                                            <select class="cs-select config-input" id="keylegendmode"
-                                                style="max-height: 22px; font-size: 12px;">
-                                                <option value="fading">fading</option>
-                                                <option value="inverting">inverting</option>
-                                                <option value="digital">digital</option>
-                                            </select>
-                                        </div>
-                                        <div class="cs-checkbox" style="margin-top: 7px;">
-                                            <input type="checkbox" class="config-input" id="forcedisableanalog">
-                                            <label for="forcedisableanalog" class="cs-checkbox__label">force
-                                                disable</label>
-                                        </div>
-                                        <div class="cs-form-group" style="margin-top: 8px;">
-                                            <label class="cs-input__label" for="fillmode">keyboard used for live
-                                                preview</label>
-                                            <button class="cs-btn" id="analogconnectbtn" style="width: 100%;">⊕
-                                                connect</button>
-                                            <div id="analogstatus"
-                                                style="font-size: 10px; margin-top: 4px; color: #808080;"></div>
-                                        </div>
-                                    </div>
-                                </fieldset>
-                            </div>
-
-                        </div>
-                    </fieldset>
-                </div>
             </div>
-        </div>
+        </main>
     </div>
     <div class="key-add-popup" id="keyAddPopup" style="display: none;">
         <div class="key-add-popup-content">
             <h3>add key</h3>
-
-            <div class="cs-form-group">
-                <label class="cs-input__label" for="popupKeySelect">KEY</label>
-                <select class="cs-select" id="popupKeySelect" style="font-size: 12px;">
+            <div class="cfg-field">
+                <label class="cfg-label" for="popupKeySelect">key</label>
+                <select class="cfg-select" id="popupKeySelect">
                     <optgroup label="Mouse">
                         <option value="mouse_left">Mouse Left</option>
                         <option value="mouse_right">Mouse Right</option>
@@ -1104,6 +671,7 @@
                         <option value="scroller">Scroller</option>
                         <option value="invisible">Invisible Spacer</option>
                         <option value="dummy">Dummy (Empty)</option>
+                        <option value="mouse_side">Mouse Side (M4+M5)</option>
                     </optgroup>
                     <optgroup label="Standard Keys">
                         <option value="key_a">A</option>
@@ -1195,10 +763,10 @@
                         <option value="key_end">END</option>
                         <option value="key_pageup">PAGE UP</option>
                         <option value="key_pagedown">PAGE DOWN</option>
-                        <option value="key_leftarrow">← Left Arrow</option>
-                        <option value="key_uparrow">↑ Up Arrow</option>
-                        <option value="key_rightarrow">→ Right Arrow</option>
-                        <option value="key_downarrow">↓ Down Arrow</option>
+                        <option value="key_leftarrow">← Left</option>
+                        <option value="key_uparrow">↑ Up</option>
+                        <option value="key_rightarrow">→ Right</option>
+                        <option value="key_downarrow">↓ Down</option>
                     </optgroup>
                     <optgroup label="Numpad">
                         <option value="key_numlock">NUM LOCK</option>
@@ -1221,87 +789,72 @@
                     </optgroup>
                 </select>
             </div>
-
-            <div class="cs-form-group">
-                <label class="cs-input__label" for="popupKeyLabel">LABEL</label>
-                <input class="cs-input" id="popupKeyLabel" type="text" placeholder="e.g., W, SHIFT, etc.">
+            <div class="cfg-field" id="popupLabelField">
+                <label class="cfg-label" for="popupKeyLabel">label</label>
+                <input class="cfg-input" id="popupKeyLabel" type="text" placeholder="e.g., W, SHIFT…">
             </div>
-
-            <div class="cs-form-group" id="popupScrollerLabels" style="display: none;">
-                <label class="cs-input__label" for="popupScrollerDefault">SCROLLER LABELS</label>
-                <input class="cs-input" id="popupScrollerDefault" type="text" placeholder="Default (e.g., -)"
-                    style="margin-bottom: 5px;">
-                <input class="cs-input" id="popupScrollerUp" type="text" placeholder="Up (e.g., ↑)"
-                    style="margin-bottom: 5px;">
-                <input class="cs-input" id="popupScrollerDown" type="text" placeholder="Down (e.g., ↓)">
+            <div class="cfg-field" id="popupScrollerLabels" style="display:none;">
+                <label class="cfg-label">scroller labels</label>
+                <input class="cfg-input" id="popupScrollerDefault" type="text" placeholder="Default (e.g. -)"
+                    style="margin-bottom:5px;">
+                <input class="cfg-input" id="popupScrollerUp" type="text" placeholder="Up (e.g. ↑)"
+                    style="margin-bottom:5px;">
+                <input class="cfg-input" id="popupScrollerDown" type="text" placeholder="Down (e.g. ↓)">
             </div>
-
-            <div class="cs-form-group" id="popupMouseSideLabels" style="display: none;">
-                <label class="cs-input__label">MOUSE SIDE LABELS</label>
-                <input class="cs-input" id="popupMouseSideM5" type="text" placeholder="M5 Label"
-                    style="margin-bottom: 5px;">
-                <input class="cs-input" id="popupMouseSideM4" type="text" placeholder="M4 Label">
+            <div class="cfg-field" id="popupMouseSideLabels" style="display:none;">
+                <label class="cfg-label">mouse side labels</label>
+                <input class="cfg-input" id="popupMouseSideM5" type="text" placeholder="M5 Label"
+                    style="margin-bottom:5px;">
+                <input class="cfg-input" id="popupMouseSideM4" type="text" placeholder="M4 Label">
             </div>
-
-            <div class="cs-slider">
-                <div id="popupWidthValue" class="value">1u</div>
-                <div class="cs-ruler"></div>
-                <input id="popupWidthSlider" max="700" min="1" step="1" type="range" value="100">
-                <label for="popupWidthSlider">WIDTH</label>
+            <div class="cfg-slider-field" style="margin-top:12px;">
+                <div class="cfg-slider-header">
+                    <label class="cfg-label" for="popupWidthSlider">width</label>
+                    <span class="cfg-slider-val" id="popupWidthValue">1.00u</span>
+                </div>
+                <input id="popupWidthSlider" class="cfg-range" max="700" min="1" step="1" type="range" value="100">
             </div>
-
             <div class="popup-buttons">
-                <button class="cs-btn" id="popupAddBtn">add</button>
-                <button class="cs-btn" id="popupCancelBtn">cancel</button>
+                <button class="cfg-btn cfg-btn--accent" id="popupAddBtn">add key</button>
+                <button class="cfg-btn" id="popupCancelBtn">cancel</button>
             </div>
         </div>
     </div>
+
     <script src="scripts/libs/AnalogSense.js"></script>
     <script src="scripts/libs/pickr.min.js"></script>
     <script src="scripts/libs/pako.min.js"></script>
     <script type="module" src="scripts/main.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // overlay return button
             let timer;
-            const box = document.getElementById("return");
-
+            const returnBox = document.getElementById("return");
             document.addEventListener("mousemove", () => {
-                box.classList.add("show");
-
+                returnBox.classList.add("show");
                 clearTimeout(timer);
-                timer = setTimeout(() => {
-                    box.classList.remove("show");
-                }, 1500);
+                timer = setTimeout(() => returnBox.classList.remove("show"), 1500);
             });
-
             document.getElementById("return-button").addEventListener("click", () => {
                 const url = new URL(window.location.href);
                 url.searchParams.delete("ws");
                 window.location.href = url.toString();
             });
+
+
         });
 
         function setDynamicScale() {
             const container = document.getElementById('inner-overlay-container');
             if (!container) return;
-
             container.style.transform = 'translate(-50%, -50%)';
-
             requestAnimationFrame(() => {
-                const naturalWidth = container.offsetWidth;
-                const naturalHeight = container.offsetHeight;
-
-                const viewportWidth = window.innerWidth;
-                const viewportHeight = window.innerHeight;
-
-                const scaleX = viewportWidth / naturalWidth;
-                const scaleY = viewportHeight / naturalHeight;
+                const scaleX = window.innerWidth / container.offsetWidth;
+                const scaleY = window.innerHeight / container.offsetHeight;
                 const scale = Math.min(scaleX, scaleY) * 0.65;
-
                 container.style.transform = `translate(-50%, -50%) scale(${scale})`;
             });
         }
-
         window.addEventListener('resize', setDynamicScale);
         window.addEventListener('load', setDynamicScale);
         setDynamicScale();

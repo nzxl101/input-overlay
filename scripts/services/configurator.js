@@ -9,7 +9,7 @@ export class ConfiguratorMode {
         this.pickrInstances = {};
         this.urlDebounceTimer = null;
 
-        document.getElementById("configurator").style.display = "block";
+        document.getElementById("configurator").style.display = "flex";
         document.getElementById("overlay").classList.remove("show");
 
         this.initDefaultLayoutValues();
