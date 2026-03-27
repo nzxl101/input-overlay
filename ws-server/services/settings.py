@@ -8,9 +8,9 @@ from pathlib import Path
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QPushButton, QLabel, QScrollArea, QFrame,
                              QLineEdit, QCheckBox, QComboBox, QGroupBox, QDialog,
-                             QDialogButtonBox)
-from PyQt6.QtCore import Qt, pyqtSignal, QObject, QThread
-from PyQt6.QtGui import QIcon, QMovie, QDesktopServices
+                             QDialogButtonBox, QTextEdit)
+from PyQt6.QtCore import Qt, pyqtSignal, QObject, QThread, QPoint
+from PyQt6.QtGui import QIcon, QMovie, QDesktopServices, QFontDatabase
 from PyQt6.QtCore import QUrl
 from pynput import keyboard, mouse
 
@@ -31,15 +31,18 @@ GITHUB_API_URL = "https://api.github.com/repos/girlglock/input-overlay/releases/
 CS16 = """
 QMainWindow {
     background-color: #4a5942;
+    border: 1px solid;
+    border-color: #8c9284 #292c21 #292c21 #8c9284;
 }
 
 QWidget {
     color: #dedfd6;
-    font-family: "Arial", sans-serif;
+    font-family: "ArialPixel", "Arial", sans-serif;
 }
 
 QLabel {
     color: #d8ded3;
+    font-size: 16px;
 }
 
 QPushButton {
@@ -48,7 +51,7 @@ QPushButton {
     border: 1px solid;
     border-color: #8c9284 #292c21 #292c21 #8c9284;
     padding: 4px 4px;
-    font-size: 13px;
+    font-size: 16px;
 }
 
 QPushButton:hover {
@@ -65,7 +68,7 @@ QLineEdit {
     border: 1px solid;
     border-color: #292c21 #8c9284 #8c9284 #292c21;
     padding: 5px;
-    font-size: 13px;
+    font-size: 16px;
 }
 
 QLineEdit:focus {
@@ -75,6 +78,7 @@ QLineEdit:focus {
 QCheckBox {
     color: #dedfd6;
     spacing: 8px;
+    font-size: 16px;
 }
 
 QCheckBox::indicator {
@@ -96,7 +100,7 @@ QComboBox {
     border: 1px solid;
     border-color: #292c21 #8c9284 #8c9284 #292c21;
     padding: 5px;
-    font-size: 13px;
+    font-size: 16px;
 }
 
 QComboBox:hover {
@@ -126,7 +130,7 @@ QComboBox QAbstractItemView {
 QGroupBox {
     color: #c4b550;
     font-weight: bold;
-    font-size: 14px;
+    font-size: 16px;
     border: 1px solid #8c9284;
     margin-top: 10px;
     padding-top: 10px;
@@ -178,6 +182,63 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
 
 QDialog {
     background-color: #4a5942;
+    border: 1px solid;
+    border-color: #8c9284 #292c21 #292c21 #8c9284;
+}
+
+QTextEdit {
+    background-color: #3e4637;
+    color: #dedfd6;
+    border: 1px solid;
+    border-color: #292c21 #8c9284 #8c9284 #292c21;
+    font-size: 16px;
+    font-family: "ArialPixel", "Arial", sans-serif;
+}
+
+#TitleBar {
+    background-color: #3a4535;
+    border-bottom: 1px solid #292c21;
+}
+
+#TitleLabel {
+    color: #c4b550;
+    font-weight: bold;
+    font-size: 16px;
+    padding-left: 6px;
+}
+
+#TitleBarBtn {
+    background-color: #4a5942;
+    color: #ffffff;
+    border: 1px solid;
+    border-color: #8c9284 #292c21 #292c21 #8c9284;
+    padding: 4px;
+    font-size: 16px;
+}
+
+#TitleBarBtn:hover {
+    color: #c4b550;
+}
+
+#TitleBarBtn:pressed {
+    border-color: #292c21 #8c9284 #8c9284 #292c21;
+}
+
+#CloseBtn {
+    background-color: #4a5942;
+    color: #ffffff;
+    border: 1px solid;
+    border-color: #8c9284 #292c21 #292c21 #8c9284;
+    padding: 4px;
+    font-size: 16px;
+}
+
+#CloseBtn:hover {
+    color: #ff6060;
+}
+
+#CloseBtn:pressed {
+    border-color: #292c21 #8c9284 #8c9284 #292c21;
 }
 """
 
@@ -250,8 +311,54 @@ def set_autostart(enabled: bool):
     except Exception as e:
         logger.error(f"set_autostart error: {e}")
 
+class TitleBar(QWidget):
+    def __init__(self, title: str, parent_window, minimizable: bool = True):
+        super().__init__(parent_window)
+        self.setObjectName("TitleBar")
+        self.setFixedHeight(26)
+        self._parent = parent_window
+        self._drag_pos: QPoint | None = None
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(2)
+
+        lbl = QLabel(title)
+        lbl.setObjectName("TitleLabel")
+        layout.addWidget(lbl)
+        layout.addStretch()
+
+        if minimizable:
+            min_btn = QPushButton("-")
+            min_btn.setObjectName("TitleBarBtn")
+            min_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            min_btn.setFixedSize(18, 18)
+            min_btn.clicked.connect(parent_window.showMinimized)
+            layout.addWidget(min_btn)
+
+        close_btn = QPushButton("X")
+        close_btn.setObjectName("CloseBtn")
+        close_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        close_btn.setFixedSize(18, 18)
+        close_btn.clicked.connect(parent_window.close)
+        layout.addWidget(close_btn)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._drag_pos = event.globalPosition().toPoint() - self._parent.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self._drag_pos is not None and event.buttons() == Qt.MouseButton.LeftButton:
+            self._parent.move(event.globalPosition().toPoint() - self._drag_pos)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self._drag_pos = None
+
+
 class UpdateChecker(QObject):
-    update_available = pyqtSignal(str)                                
+    update_available = pyqtSignal(str, str) # version, release_body
     check_done      = pyqtSignal()
 
     def check(self, dismissed: list):
@@ -266,8 +373,9 @@ class UpdateChecker(QObject):
                 with urllib.request.urlopen(req, timeout=5) as resp:
                     data = json.loads(resp.read().decode())
                 latest = data.get("tag_name", "").lstrip("v")
+                body   = data.get("body", "").strip()
                 if latest and latest != WS_SERVER_VERSION and latest not in dismissed:
-                    self.update_available.emit(latest)
+                    self.update_available.emit(latest, body)
             except Exception as e:
                 logger.debug(f"update check failed: {e}")
             finally:
@@ -275,12 +383,13 @@ class UpdateChecker(QObject):
         threading.Thread(target=_run, daemon=True).start()
 
 class UpdateDialog(QDialog):
-    def __init__(self, latest_version: str, parent=None):
+    def __init__(self, latest_version: str, release_body: str = "", parent=None):
         super().__init__(parent)
         self.latest_version = latest_version
+        self.release_body   = release_body
         self.dismissed = False
-        self.setWindowTitle("UPDATE AVAILABLE")
-        self.setFixedWidth(420)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+        self.setFixedWidth(480)
         icon_path = get_resource_path("assets/icon.ico")
         if icon_path.exists():
             self.setWindowIcon(QIcon(str(icon_path)))
@@ -289,8 +398,16 @@ class UpdateDialog(QDialog):
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(12)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self._title_bar = TitleBar("UPDATE AVAILABLE", self, minimizable=False)
+        layout.addWidget(self._title_bar)
+
+        inner = QWidget()
+        inner_layout = QVBoxLayout(inner)
+        inner_layout.setContentsMargins(20, 12, 20, 20)
+        inner_layout.setSpacing(12)
 
         content_row = QHBoxLayout()
         content_row.setSpacing(12)
@@ -298,8 +415,8 @@ class UpdateDialog(QDialog):
         text_col = QVBoxLayout()
         text_col.setSpacing(8)
 
-        title = QLabel("A new version of Input Overlay is available!")
-        title.setStyleSheet("color: #c4b550; font-weight: bold; font-size: 14px;")
+        title = QLabel("A new version of Input Overlay WebSocket Server is available!")
+        title.setStyleSheet("color: #c4b550; font-weight: bold; font-size: 16px;")
         title.setWordWrap(True)
         text_col.addWidget(title)
 
@@ -307,7 +424,7 @@ class UpdateDialog(QDialog):
             f"Current version: <b>{WS_SERVER_VERSION}</b><br>"
             f"Latest version:  <b>{self.latest_version}</b>"
         )
-        body.setStyleSheet("color: #dedfd6; font-size: 13px;")
+        body.setStyleSheet("color: #dedfd6; font-size: 16px;")
         body.setTextFormat(Qt.TextFormat.RichText)
         text_col.addWidget(body)
         text_col.addStretch()
@@ -325,7 +442,18 @@ class UpdateDialog(QDialog):
         gif_label.setAlignment(Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight)
         content_row.addWidget(gif_label)
 
-        layout.addLayout(content_row)
+        inner_layout.addLayout(content_row)
+
+        if self.release_body:
+            notes_label = QLabel("PATCH NOTES")
+            notes_label.setStyleSheet("color: #c4b550; font-weight: bold; font-size: 16px;")
+            inner_layout.addWidget(notes_label)
+
+            notes_box = QTextEdit()
+            notes_box.setReadOnly(True)
+            notes_box.setPlainText(self.release_body)
+            notes_box.setFixedHeight(160)
+            inner_layout.addWidget(notes_box)
 
         btn_row = QHBoxLayout()
         download_btn = QPushButton("DOWNLOAD")
@@ -338,7 +466,14 @@ class UpdateDialog(QDialog):
         dismiss_btn.clicked.connect(self._on_dismiss)
         btn_row.addWidget(dismiss_btn)
 
-        layout.addLayout(btn_row)
+        dismiss_btn = QPushButton("REMIND ON NEXT START")
+        dismiss_btn.setMinimumHeight(32)
+        dismiss_btn.clicked.connect(self._on_later)
+        btn_row.addWidget(dismiss_btn)
+
+        inner_layout.addLayout(btn_row)
+
+        layout.addWidget(inner)
 
     def _on_download(self):
         QDesktopServices.openUrl(QUrl(GITHUB_RELEASES_URL))
@@ -348,6 +483,9 @@ class UpdateDialog(QDialog):
         self.dismissed = True
         self.accept()
 
+    def _on_later(self):
+        self.accept()
+
 class InputSignals(QObject):
     key_detected   = pyqtSignal(str)
     stop_listening = pyqtSignal()
@@ -355,6 +493,7 @@ class InputSignals(QObject):
 class SettingsEditor(QMainWindow):
     def __init__(self, config_path):
         super().__init__()
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.config_path = config_path
         icon_path = get_resource_path("assets/icon.ico")
         if icon_path.exists():
@@ -386,6 +525,7 @@ class SettingsEditor(QMainWindow):
                 self.analog_enabled      = config.get('analog_enabled', False)
                 self.analog_device       = config.get('analog_device', None)
                 self.balloon_enabled     = config.get('balloon_notifications', True)
+                self.raw_mouse_enabled   = config.get('raw_mouse_enabled', False)
                 self.autostart_enabled   = is_autostart_enabled()
                 self.dismissed_versions  = config.get('dismissed_versions', [])
         except Exception:
@@ -394,6 +534,7 @@ class SettingsEditor(QMainWindow):
             self.analog_enabled     = False
             self.analog_device      = None
             self.balloon_enabled    = True
+            self.raw_mouse_enabled  = False
             self.autostart_enabled  = is_autostart_enabled()
             self.dismissed_versions = []
 
@@ -406,6 +547,7 @@ class SettingsEditor(QMainWindow):
             config['auth_token']           = self.auth_input.text()
             config['analog_enabled']       = self.analog_checkbox.isChecked()
             config['balloon_notifications'] = self.balloon_checkbox.isChecked()
+            config['raw_mouse_enabled']    = self.raw_mouse_checkbox.isChecked()
             config['dismissed_versions']   = self.dismissed_versions
             if self.device_combo.currentData():
                 config['analog_device'] = self.device_combo.currentData()
@@ -474,14 +616,24 @@ class SettingsEditor(QMainWindow):
 
     def setup_ui(self):
         self.setWindowTitle("SETTINGS")
-        self.setFixedSize(1000, 660)
+        self.setFixedSize(1000, 686)
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        self._title_bar = TitleBar("SETTINGS", self, minimizable=True)
+        main_layout.addWidget(self._title_bar)
+
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout.addWidget(content_widget)
 
         columns_layout = QHBoxLayout()
+        content_layout.addLayout(columns_layout)
 
         left_column = QVBoxLayout()
         left_column.setSpacing(10)
@@ -498,13 +650,22 @@ class SettingsEditor(QMainWindow):
         self.auth_input.setEchoMode(QLineEdit.EchoMode.Password)
         auth_layout.addWidget(self.auth_input)
 
+        token_btn_layout = QHBoxLayout()
+        token_btn_layout.setSpacing(4)
+
         show_token_btn = QPushButton("SHOW/HIDE TOKEN")
         show_token_btn.clicked.connect(self.toggle_token_visibility)
-        auth_layout.addWidget(show_token_btn)
+        token_btn_layout.addWidget(show_token_btn)
 
         copy_token_btn = QPushButton("COPY TOKEN")
         copy_token_btn.clicked.connect(self.copy_token)
-        auth_layout.addWidget(copy_token_btn)
+        token_btn_layout.addWidget(copy_token_btn)
+
+        regen_token_btn = QPushButton("REGENERATE TOKEN")
+        regen_token_btn.clicked.connect(self.regenerate_token)
+        token_btn_layout.addWidget(regen_token_btn)
+
+        auth_layout.addLayout(token_btn_layout)
 
         auth_group.setLayout(auth_layout)
         left_column.addWidget(auth_group)
@@ -555,6 +716,10 @@ class SettingsEditor(QMainWindow):
         self.autostart_checkbox = QCheckBox("Start with Windows")
         self.autostart_checkbox.setChecked(self.autostart_enabled)
         app_layout.addWidget(self.autostart_checkbox)
+
+        self.raw_mouse_checkbox = QCheckBox("Enable RawInputBuffer reads from the Windows API\n(mouse movement for mouse_pad element)")
+        self.raw_mouse_checkbox.setChecked(self.raw_mouse_enabled)
+        app_layout.addWidget(self.raw_mouse_checkbox)
 
         app_group.setLayout(app_layout)
         left_column.addWidget(app_group)
@@ -637,7 +802,6 @@ class SettingsEditor(QMainWindow):
 
         columns_layout.addLayout(left_column, 1)
         columns_layout.addLayout(right_column, 1)
-        main_layout.addLayout(columns_layout)
 
         footer_layout = QHBoxLayout()
         self.save_btn = QPushButton("SAVE")
@@ -648,11 +812,11 @@ class SettingsEditor(QMainWindow):
 
         footer_layout.addWidget(self.save_btn)
         footer_layout.addWidget(self.cancel_btn)
-        main_layout.addLayout(footer_layout)
+        content_layout.addLayout(footer_layout)
 
         self.refresh_list()
 
-    def _on_update_available(self, latest_version: str):
+    def _on_update_available(self, latest_version: str, release_body: str):
         self._latest_version = latest_version
         self.version_label.setText(
             f'Input-Overlay WebSocket Server | Version: {WS_SERVER_VERSION} '
@@ -676,6 +840,12 @@ class SettingsEditor(QMainWindow):
             logger.error("pyperclip not installed")
         except Exception as e:
             logger.error(f"failed to copy token: {e}")
+
+    def regenerate_token(self):
+        import secrets
+        new_token = secrets.token_urlsafe(32)
+        self.auth_input.setText(new_token)
+        logger.info("auth token regenerated")
 
     def on_analog_toggled(self, state):
         self.device_combo.setEnabled(state == Qt.CheckState.Checked.value)
@@ -813,13 +983,16 @@ def check_for_updates_on_startup(config_path: str = "config.json", child_process
             with urllib.request.urlopen(req, timeout=5) as resp:
                 data = json.loads(resp.read().decode())
             latest = data.get("tag_name", "").lstrip("v")
+            body   = data.get("body", "").strip()
             if latest and latest != WS_SERVER_VERSION and latest not in dismissed:
-                import subprocess
+                import subprocess, os
+                env = os.environ.copy()
+                env["IOV_UPDATE_BODY"] = body
                 if getattr(sys, 'frozen', False):
-                    proc = subprocess.Popen([sys.executable, "--update-popup", latest, config_path])
+                    proc = subprocess.Popen([sys.executable, "--update-popup", latest, config_path], env=env)
                 else:
                     script_path = Path(__file__).resolve()
-                    proc = subprocess.Popen([sys.executable, str(script_path), "--update-popup", latest, config_path])
+                    proc = subprocess.Popen([sys.executable, str(script_path), "--update-popup", latest, config_path], env=env)
                 if child_processes is not None:
                     child_processes.append(proc)
         except Exception as e:
@@ -828,9 +1001,10 @@ def check_for_updates_on_startup(config_path: str = "config.json", child_process
     threading.Thread(target=_run, daemon=True).start()
 
 
-def _run_update_popup_process(latest_version: str, config_path: str):
+def _run_update_popup_process(latest_version: str, config_path: str, release_body: str = ""):
     app = QApplication(sys.argv)
-    dlg = UpdateDialog(latest_version)
+    _load_pixel_font()
+    dlg = UpdateDialog(latest_version, release_body)
     dlg.setStyleSheet(CS16)
     dlg.exec()
     if dlg.dismissed:
@@ -846,8 +1020,22 @@ def _run_update_popup_process(latest_version: str, config_path: str):
         except Exception as e:
             logger.error(f"could not save dismissed version: {e}")
 
+def _load_pixel_font():
+    font_path = get_resource_path("assets/arialpixel.ttf")
+    if font_path.exists():
+        font_id = QFontDatabase.addApplicationFont(str(font_path))
+        if font_id == -1:
+            logger.warning("arialpixel.ttf could not be loaded by Qt")
+        else:
+            families = QFontDatabase.applicationFontFamilies(font_id)
+            logger.debug(f"loaded pixel font families: {families}")
+    else:
+        logger.warning(f"arialpixel.ttf not found at {font_path}")
+
+
 def run_settings_editor(config_path="config.json"):
     app = QApplication(sys.argv)
+    _load_pixel_font()
     editor = SettingsEditor(config_path)
     editor.show()
     sys.exit(app.exec())
@@ -857,6 +1045,7 @@ if __name__ == "__main__":
     if len(sys.argv) >= 2 and sys.argv[1] == "--update-popup":
         latest = sys.argv[2] if len(sys.argv) >= 3 else ""
         config_path = sys.argv[3] if len(sys.argv) >= 4 else "config.json"
-        _run_update_popup_process(latest, config_path)
+        release_body = os.environ.get("IOV_UPDATE_BODY", "")
+        _run_update_popup_process(latest, config_path, release_body)
     else:
         run_settings_editor()

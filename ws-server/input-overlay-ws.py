@@ -19,6 +19,16 @@ from services.consts import (MOUSE_BUTTON_MAP, HID_TO_VK, RAZER_TO_HID,
                              RAW_CODE_TO_KEY_NAME, MOUSE_BUTTON_NAMES, MOUSE_SCROLL_NAMES,
                              get_rawcode)
 
+if sys.platform == 'win32':
+    try:
+        from services.rawinput import RawMouseThread
+        RAW_MOUSE_AVAILABLE = True
+    except Exception as _e:
+        RAW_MOUSE_AVAILABLE = False
+        logging.getLogger(__name__).warning(f"raw mouse unavailable: {_e}")
+else:
+    RAW_MOUSE_AVAILABLE = False
+
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -58,6 +68,9 @@ class InputOverlayServer:
         self.config_path = "config.json"
         self.config_last_modified = 0
         self.analog_buffer = {}
+        self.raw_mouse_enabled = False
+        self.raw_mouse_min_delta = 0
+        self._raw_mouse_thread: "RawMouseThread | None" = None
 
     def show_toast_notification(self, title: str, message: str, duration: str = "short"):
         if not TOAST_AVAILABLE or not self.balloon_notifications:
@@ -70,7 +83,7 @@ class InputOverlayServer:
                 msg=message,
                 icon=str(icon_path) if icon_path.exists() else ""
             )
-            toast.set_audio(audio.Default, loop=False)
+            toast.set_audio(audio.Reminder, loop=False)
             toast.show()
         except Exception as e:
             logger.error(f"failed to show toast notification: {e}")
@@ -95,6 +108,8 @@ class InputOverlayServer:
                     "key_whitelist": [],
                     "balloon_notifications": True,
                     "dismissed_versions": [],
+                    "raw_mouse_enabled": False,
+                    "raw_mouse_min_delta": 0,
                     "cpu_affinity": [0, 1]
                 }
                 with open(config_file, 'w') as f:
@@ -118,13 +133,16 @@ class InputOverlayServer:
 
                     old_analog_enabled = self.analog_enabled
                     old_analog_device = self.analog_device
-                    
+                    old_raw_mouse = self.raw_mouse_enabled
+
                     self.auth_token = config.get('auth_token', self.auth_token)
                     self.analog_enabled = config.get('analog_enabled', False)
                     self.analog_device = config.get('analog_device', None)
                     self.key_whitelist = config.get('key_whitelist', [])
                     self.balloon_notifications = config.get('balloon_notifications', True)
-                    
+                    self.raw_mouse_enabled = config.get('raw_mouse_enabled', False)
+                    self.raw_mouse_min_delta = config.get('raw_mouse_min_delta', 0)
+
                     logger.info(f"settings updated - analog: {self.analog_enabled}, device: {self.analog_device}")
                     logger.info(f"whitelist: {len(self.key_whitelist)} keys")
 
@@ -133,7 +151,13 @@ class InputOverlayServer:
                             self.stop_analog_support()
                         if self.analog_enabled:
                             self.start_analog_support()
-                    
+
+                    if old_raw_mouse != self.raw_mouse_enabled:
+                        if old_raw_mouse:
+                            self.stop_raw_mouse()
+                        if self.raw_mouse_enabled:
+                            self.start_raw_mouse()
+
                     return True
         except Exception as e:
             logger.error(f"error reloading config: {e}")
@@ -156,8 +180,12 @@ class InputOverlayServer:
         except Exception as e:
             logger.error(f"error saving config: {e}")
 
-    def is_allowed(self, code: int, is_mouse: bool = False, is_scroll: bool = False) -> bool:
+    def is_allowed(self, code: int, is_mouse: bool = False,
+                   is_scroll: bool = False, is_mouse_move: bool = False) -> bool:
         if not self.key_whitelist:
+            return True
+
+        if is_mouse_move and self.raw_mouse_enabled:
             return True
 
         name = None
@@ -194,18 +222,32 @@ class InputOverlayServer:
             self.clients.discard(client)
 
     async def process_message_queue(self):
+        FLUSH_INTERVAL = 1.0 / 125.0
+        last_flush = asyncio.get_event_loop().time()
+        pending_dx = 0
+        pending_dy = 0
+
         while self.running:
             try:
-                messages_to_send = []
+                now = asyncio.get_event_loop().time()
+
                 while not self.message_queue.empty():
                     try:
-                        messages_to_send.append(self.message_queue.get_nowait())
-                    except:
+                        msg = self.message_queue.get_nowait()
+                    except Exception:
                         break
-                
-                for message in messages_to_send:
-                    await self.broadcast(message)
-                
+                    if msg.get("event_type") == "mouse_moved":
+                        pending_dx += msg.get("dx", 0)
+                        pending_dy += msg.get("dy", 0)
+                    else:
+                        await self.broadcast(msg)
+
+                if (pending_dx != 0 or pending_dy != 0) and (now - last_flush) >= FLUSH_INTERVAL:
+                    await self.broadcast({"event_type": "mouse_moved", "dx": pending_dx, "dy": pending_dy})
+                    pending_dx = 0
+                    pending_dy = 0
+                    last_flush = now
+
                 await asyncio.sleep(0.001)
             except Exception as e:
                 logger.error(f"error processing message queue: {e}")
@@ -241,6 +283,31 @@ class InputOverlayServer:
         if rotation != 0 and self.is_allowed(rotation, is_scroll=True):
             message = {"event_type": "mouse_wheel", "rotation": rotation}
             self.queue_message(message)
+
+    def _on_raw_mouse_move(self, dx: int, dy: int):
+        if not self.is_allowed(0, is_mouse_move=True):
+            return
+        self.queue_message({"event_type": "mouse_moved", "dx": dx, "dy": dy})
+
+    def start_raw_mouse(self):
+        if not RAW_MOUSE_AVAILABLE:
+            logger.warning("rawinput buffer not available on this os")
+            return
+        if self._raw_mouse_thread and self._raw_mouse_thread.is_alive():
+            logger.debug("rawinput buffer already running")
+            return
+        self._raw_mouse_thread = RawMouseThread(
+            callback=self._on_raw_mouse_move,
+            min_delta=self.raw_mouse_min_delta,
+        )
+        self._raw_mouse_thread.start()
+        logger.info("rawinput buffer started")
+
+    def stop_raw_mouse(self):
+        if self._raw_mouse_thread:
+            self._raw_mouse_thread.stop()
+            self._raw_mouse_thread = None
+        logger.info("rawinput buffer stopped")
 
     def start_analog_support(self):
         if not self.analog_enabled:
@@ -862,14 +929,13 @@ class InputOverlayServer:
                     pass
         except websockets.exceptions.ConnectionClosed:
             logger.info(f"connection closed: {client_ip}:{client_port}")
-            
+        finally:
             if websocket in self.authenticated_clients:
                 remaining = len(self.authenticated_clients) - 1
                 self.show_toast_notification(
                     "client disconnected",
                     f"ip: {client_ip}:{client_port}\nremaining connections: {remaining}"
                 )
-        finally:
             self.clients.discard(websocket)
             self.authenticated_clients.discard(websocket)
 
@@ -892,6 +958,8 @@ class InputOverlayServer:
         self.queue_processor_task = asyncio.create_task(self.process_message_queue())
         self.start_input_listeners()
         self.start_analog_support()
+        if self.raw_mouse_enabled:
+            self.start_raw_mouse()
         
         async with websockets.serve(self.handle_client, self.host, self.port):
             logger.info(f"server started on ws://{self.host}:{self.port}")
@@ -922,6 +990,7 @@ class InputOverlayServer:
             
             self.stop_input_listeners()
             self.stop_analog_support()
+            self.stop_raw_mouse()
 
     def stop(self):
         self.running = False
@@ -1000,8 +1069,10 @@ def main():
     if len(sys.argv) >= 2 and sys.argv[1] == "--update-popup":
         latest = sys.argv[2] if len(sys.argv) >= 3 else ""
         config_path = sys.argv[3] if len(sys.argv) >= 4 else "config.json"
+        import os
+        release_body = os.environ.get("IOV_UPDATE_BODY", "")
         from services.settings import _run_update_popup_process
-        _run_update_popup_process(latest, config_path)
+        _run_update_popup_process(latest, config_path, release_body)
         return
 
     server = InputOverlayServer()
@@ -1013,6 +1084,8 @@ def main():
     server.analog_device = config.get('analog_device', None)
     server.key_whitelist = config.get('key_whitelist', [])
     server.balloon_notifications = config.get('balloon_notifications', True)
+    server.raw_mouse_enabled = config.get('raw_mouse_enabled', False)
+    server.raw_mouse_min_delta = config.get('raw_mouse_min_delta', 0)
 
     if sys.platform == 'win32':
         cpu_affinity = config.get('cpu_affinity', [0, 1])
