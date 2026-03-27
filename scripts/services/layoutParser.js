@@ -1,6 +1,11 @@
 //guh
 import { DEFAULT_LAYOUT_STRINGS } from "../consts.js";
 
+const REGEX_MOUSE_PAD = /^mouse_pad:(u[\d-]+):(u[\d-]+)(?::(a-[tbc][lrc]))?$/;
+const REGEX_SCROLLER = /^([\w|]+):"([^"]+)":"([^"]+)":"([^"]+)"(?::([-\w.]+))?$/;
+const REGEX_MOUSE_SIDE = /^(mouse_side):"([^"]+)":"([^"]+)"(?::([-\w.]+))?$/;
+const REGEX_STANDARD = /^([\w|]+):"([^"]+)"(?::([-\w.]+))?$/;
+
 export class LayoutParser {
     constructor() {
         this.DEFAULT_LAYOUT_STRINGS = DEFAULT_LAYOUT_STRINGS;
@@ -9,61 +14,35 @@ export class LayoutParser {
     parseElementDef(elementString) {
         if (!elementString) return null;
         elementString = elementString.trim();
-        if (elementString === "dummy") return null;
+
+        if (elementString === "dummy") return { type: "dummy" };
+        if (elementString === "br") return { type: "br" };
         if (elementString === "invisible") return { class: "invisible" };
 
-        const scrollerMatch = elementString.match(/^([\w|]+):"([^"]+)":"([^"]+)":"([^"]+)"(?::([-\w.]+))?$/);
-        if (scrollerMatch && scrollerMatch[1].includes('scroller')) {
-            const keyString = scrollerMatch[1];
-            const keys = keyString.split('|');
+        let m;
 
-            return {
-                key: keys[0],
-                keys: keys,
-                labels: [scrollerMatch[2], scrollerMatch[3], scrollerMatch[4]],
-                class: scrollerMatch[5] || "",
-                type: "scroller"
-            };
+        if ((m = REGEX_MOUSE_PAD.exec(elementString)))
+            return { key: "mouse_pad", type: "mouse_pad", widthClass: m[1], heightClass: m[2], anchor: m[3] || "a-tl" };
+
+        if ((m = REGEX_SCROLLER.exec(elementString)) && m[1].includes("scroller")) {
+            const keys = m[1].split("|");
+            return { key: keys[0], keys, labels: [m[2], m[3], m[4]], class: m[5] || "", type: "scroller" };
         }
 
-        const sideMatch = elementString.match(/^(mouse_side):"([^"]+)":"([^"]+)"(?::([-\w.]+))?$/);
-        if (sideMatch) {
-            return {
-                key: sideMatch[1],
-                labels: [sideMatch[2], sideMatch[3]],
-                class: sideMatch[4] || "",
-                type: "mouse_side"
-            };
-        }
+        if ((m = REGEX_MOUSE_SIDE.exec(elementString)))
+            return { key: m[1], labels: [m[2], m[3]], class: m[4] || "", type: "mouse_side" };
 
-        const standardMatch = elementString.match(/^([\w|]+):"([^"]+)"(?::([-\w.]+))?$/);
-        if (standardMatch) {
-            const keyString = standardMatch[1];
-            const label = standardMatch[2];
-            const customClass = standardMatch[3];
+        if ((m = REGEX_STANDARD.exec(elementString))) {
+            const keys = m[1].split("|");
+            const label = m[2];
+            const customClass = m[3];
+            const type = (keys[0].startsWith("mouse_") || keys[0] === "scroller") ? "mouse" : "key";
 
-            const keys = keyString.split('|');
-            let type = "key";
-            if (keys[0].startsWith("mouse_") || keys[0] === "scroller") {
-                type = "mouse";
-            }
+            let cls;
+            if (label === "invis") cls = customClass ? `${customClass} invisible` : "invisible";
+            else if (customClass) cls = customClass;
 
-            const elementDef = {
-                key: keys[0],
-                keys: keys,
-                label: label,
-                type: type
-            };
-
-            if ((label === "invis") && customClass) {
-                elementDef.class = `${customClass} invisible`;
-            } else if (label === "invis") {
-                elementDef.class = "invisible";
-            } else if (customClass) {
-                elementDef.class = customClass;
-            }
-
-            return elementDef;
+            return { key: keys[0], keys, label, type, ...(cls ? { class: cls } : {}) };
         }
 
         return null;
@@ -71,45 +50,46 @@ export class LayoutParser {
 
     parseCustomLayoutInput(inputString) {
         if (!inputString) return [];
+        return inputString.split(/\s*,\s*/).map(s => this.parseElementDef(s)).filter(Boolean);
+    }
 
-        return inputString.split(/\s*,\s*/)
-            .map(this.parseElementDef.bind(this))
-            .filter(def => def !== null);
+    splitByBr(items) {
+        const rows = [];
+        let current = [];
+        for (const item of items) {
+            if (item.type === "br") {
+                if (current.length) rows.push(current);
+                current = [];
+            } else if (item.type !== "dummy") {
+                current.push(item);
+            }
+        }
+        if (current.length) rows.push(current);
+        return rows.length ? rows : [[]];
     }
 
     getKeyboardLayoutDef(settings) {
         const customLayout = [];
+        let userProvided = false;
+        const rowKeys = ["customLayoutRow1", "customLayoutRow2", "customLayoutRow3", "customLayoutRow4", "customLayoutRow5"];
 
-        const row1 = this.parseCustomLayoutInput(settings.customLayoutRow1);
-        const row2 = this.parseCustomLayoutInput(settings.customLayoutRow2);
-        const row3 = this.parseCustomLayoutInput(settings.customLayoutRow3);
-        const row4 = this.parseCustomLayoutInput(settings.customLayoutRow4);
-        const row5 = this.parseCustomLayoutInput(settings.customLayoutRow5);
-
-        if (row1.length > 0) customLayout.push(row1);
-        if (row2.length > 0) customLayout.push(row2);
-        if (row3.length > 0) customLayout.push(row3);
-        if (row4.length > 0) customLayout.push(row4);
-        if (row5.length > 0) customLayout.push(row5);
-
-        if (customLayout.length > 0) {
-            return customLayout;
+        for (const key of rowKeys) {
+            if (!settings[key]) continue;
+            userProvided = true;
+            const rows = this.splitByBr(this.parseCustomLayoutInput(settings[key]));
+            for (const r of rows) if (r.length) customLayout.push(r);
         }
 
-        return [
-            this.parseCustomLayoutInput(this.DEFAULT_LAYOUT_STRINGS.row1),
-            this.parseCustomLayoutInput(this.DEFAULT_LAYOUT_STRINGS.row2),
-            this.parseCustomLayoutInput(this.DEFAULT_LAYOUT_STRINGS.row3),
-            this.parseCustomLayoutInput(this.DEFAULT_LAYOUT_STRINGS.row4),
-            this.parseCustomLayoutInput(this.DEFAULT_LAYOUT_STRINGS.row5)
-        ].filter(row => row.length > 0);
+        if (userProvided) return customLayout;
+
+        return ["row1", "row2", "row3", "row4", "row5"]
+            .map(k => this.parseCustomLayoutInput(this.DEFAULT_LAYOUT_STRINGS[k]))
+            .filter(r => r.length);
     }
 
     getMouseLayoutDef(settings) {
-        const customLayout = this.parseCustomLayoutInput(settings.customLayoutMouse);
-        if (customLayout.length > 0) {
-            return customLayout;
-        }
-        return this.parseCustomLayoutInput(this.DEFAULT_LAYOUT_STRINGS.mouse);
+        const parsed = this.parseCustomLayoutInput(settings.customLayoutMouse);
+        if (parsed.length) return this.splitByBr(parsed);
+        return this.splitByBr(this.parseCustomLayoutInput(this.DEFAULT_LAYOUT_STRINGS.mouse));
     }
 }

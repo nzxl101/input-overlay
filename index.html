@@ -34,15 +34,15 @@
     <div id="configurator">
         <aside class="cfg-sidebar">
             <div class="cfg-title">
-                <img src="media/favicon.png" width="32" />
+                <img src="media/favicon.png" width="54" alt=""/>
                 <span class="cfg-title-text">input overlay</span>
                 <a href="https://x.com/girlglock_" target="_blank" style="margin-right: 1px;"><img
                         src="https://www.toptal.com/designers/htmlarrows/assets/images/twitter-button-light-4b743ac5.svg"
-                        style="width: 14px; height: 14px; margin-right: 1px; margin-top: 8px; filter: brightness(0) saturate(100%) invert(100%);">
+                        style="width: 14px; height: 14px; margin-right: 1px; margin-top: 8px; filter: brightness(0) saturate(100%) invert(100%);" alt="Twitter">
                 </a>
                 <a href="https://github.com/girlglock/input-overlay" target="_blank" style="margin-right: 1px;"><img
                         src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg"
-                        style="width: 14px; height: 14px; margin-right: 1px; margin-top: 8px; filter: brightness(0) saturate(100%) invert(100%);">
+                        style="width: 14px; height: 14px; margin-right: 1px; margin-top: 8px; filter: brightness(0) saturate(100%) invert(100%);" alt="Github Repository">
                 </a>
             </div>
 
@@ -66,7 +66,7 @@
                 <div class="cfg-field" style="margin-top:10px;">
                     <label class="cfg-label" for="generatedlink">obs browser source url</label>
                     <div class="link-container">
-                        <input class="cfg-input" id="generatedlink" type="text" readonly>
+                        <input class="cfg-input" id="generatedlink" type="text">
                     </div>
                 </div>
                 <div class="cfg-row cfg-row--2col" style="margin-top:8px;">
@@ -81,27 +81,35 @@
                     <div class="cfg-accordion-content">
                         <div class="cfg-accordion-inner instructions">
                             <h1>Option #1 (recommended)</h1>
+                            <blockquote class="note note--green">🛈 Supports hall effect keyboards via the server
+                                settings.</blockquote>
                             <ol>
                                 <li>get the <a href="https://github.com/girlglock/input-overlay/releases"
                                         target="_blank">input-overlay-ws</a> server</li>
-                                <li>run it and right click the tray icon to copy your auth token</li>
-                                <li>paste the token in the auth token field below</li>
-                                <li>configure your overlay, then copy the URL and paste it as an OBS browser source</li>
+                                <li>run it and right click the tray icon to open the settings</li>
+                                <li>copy your auth token (you can change it to whatever you like)</li>
+                                <li>paste the token in the auth token field above</li>
+                                <li>configure your overlay to your liking, then copy the URL and paste it as an OBS
+                                    browser source</li>
                                 <ul style="margin-top:8px;">
-                                    <li>tip: edit <code>config.json</code> to change the address/port</li>
-                                    <li>tip: configure the key whitelist in the server settings</li>
+                                    <li>tip: edit <code>config.json</code> to change the address/port if you want to
+                                        stream your inputs from another pc</li>
+                                    <li>tip: you can configure the key whitelist in the server settings to ensure you
+                                        are only sending keys over your network that are configured in the overlay</li>
                                 </ul>
-                                <blockquote class="note note--green">🛈 Supports hall effect keyboards via the server
-                                    settings.</blockquote>
                             </ol>
                             <h1>Option #2</h1>
+                            <blockquote class="note note--red">⚠︎ No auth token support so anyone on your network could
+                                potentially listen to your keys,<br>
+                                no key whitelist,<br>
+                                prone to stuck keys,
+                                <br>uses mouse pointer position for mouse_moved events which wont work in games
+                            </blockquote>
                             <ol>
                                 <li>install the <a href="https://github.com/univrsal/input-overlay"
                                         target="_blank">input-overlay OBS plugin</a></li>
                                 <li>enable the websocket server in plugin settings</li>
                                 <li>restart OBS, copy the overlay URL, add it as a browser source</li>
-                                <blockquote class="note note--red">🛈 Easier setup but no authentication support.
-                                </blockquote>
                             </ol>
                         </div>
                     </div>
@@ -226,6 +234,17 @@
                                         <td>side buttons</td>
                                         <td><code>mouse_side:"m5":"m4"</code></td>
                                     </tr>
+                                    <tr>
+                                        <td>mouse pad</td>
+                                        <td><code>mouse_pad:width:height:anchor</code>
+                                            <code>mouse_pad:u4-25:u3-31:a-tl</code>
+                                            anchor classes:<br>
+                                            top-left: <code>a-tl</code>,<br>
+                                            top-right: <code>a-tr</code>,<br>
+                                            bottom-left: <code>a-bl</code>,<br>
+                                            bottom-right: <code>a-br</code>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
 
@@ -264,6 +283,25 @@
                     <label class="cfg-accordion-label" for="acc-patchnotes">patch notes</label>
                     <div class="cfg-accordion-content">
                         <div class="cfg-accordion-inner patchnotes">
+                            <h1>2026-03-29</h1>
+                            <h3>ws server</h3>
+                            <ul>
+                                <li>added raw input buffer read for mouse inputs</li>
+                                <li>improved ws message queue</li>
+                                <li>capped polling rate for analog devices to 125Hz</li>
+                                <li>update popup improvements</li>
+                            </ul>
+                            <h3>overlay</h3>
+                            <ul>
+                                <li>new mouse_pad element that listens to raw input buffer ws events (see cheat sheet)
+                                </li>
+                                <li>slightly improved overlay autosizing</li>
+                            </ul>
+                            <h1>2026-03-20</h1>
+                            <h3>quality of life</h3>
+                            <ul>
+                                <li>remade the configurator ui</li>
+                            </ul>
                             <h1>2026-03-21</h1>
                             <h3>ws server</h3>
                             <ul>
@@ -482,6 +520,35 @@
                             <input id="gapmodifier" class="cfg-range config-input" type="range" max="300" min="1"
                                 step="1" value="100">
                         </div>
+                        <div class="cfg-section">
+                            <div class="cfg-section-title">mouse pad<div class="cs-hr"></div>
+                            </div>
+                            <div class="cfg-slider-pair">
+                                <div class="cfg-slider-field">
+                                    <div class="cfg-slider-header">
+                                        <label class="cfg-label" for="mousetrailsensitivity">sensitivity</label>
+                                        <span class="cfg-slider-val" id="mousetrailsensitivityvalue">1.0x</span>
+                                    </div>
+                                    <input id="mousetrailsensitivity" class="cfg-range config-input" type="range"
+                                        min="1" max="5000" step="5" value="100">
+                                </div>
+                                <div class="cfg-slider-field">
+                                    <div class="cfg-slider-header">
+                                        <label class="cfg-label" for="mousetrailfadeout">fade duration</label>
+                                        <span class="cfg-slider-val" id="mousetrailfadeoutvalue">600ms</span>
+                                    </div>
+                                    <input id="mousetrailfadeout" class="cfg-range config-input" type="range" min="0"
+                                        max="3000" step="50" value="600">
+                                </div>
+                            </div>
+                            <div class="cfg-checkboxes" style="margin-top:8px;">
+                                <label class="cfg-checkbox">
+                                    <input type="checkbox" checked class="config-input" id="mousetrailrecenter">
+                                    <span class="cfg-checkbox-box"></span>
+                                    <span class="cfg-checkbox-label">recenter after fadeout</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                     <div class="cfg-section">
                         <div class="cfg-section-title">font &amp; options
@@ -587,7 +654,7 @@
                                         value="https://overlay.girlglock.com?cfg=eNplj91O4zAQhd9lLnzVSnGS0tVIvsjyI1ZqJSiVuESOYwcLN87aCaUPsOIxEG_II2DH1W5ZMlJ8cmbONw4Xg36Wwhrr2EKos2VDdMdPzB9ZLFJz8dQ6O3ZNsimPVS9Imq3bZJfLujmjxI6D0d2RUKpYRNluSIaaHtIau2d5SRxv9OhZRnonvfeCG8kozYjvpWxYkWWk5f3ONlppGRaH7yN-Gp1CYS7_4o7dPz8uVnynzYFVTnNzo1-kIbU1TewwSsToB7tb8UMgbOyesid5eIicXiLo7ll7mEWLItCkcoQ8qQKhSKpEKOF_Vj6xBl4jbKufgCOdL6bp3wi3KbdHuE8qbLtMyiFsvrGKiWWkGvyjVgPC3fWvq21g5lOGI1Qp7UMrqQbhIimFcPWNuPhLFIMzCOfbzerkjrHBTVhUrbYntu-5CFe9u6nOL4NdzIviC3htRy_ZLr4nBMKaxlvOy-XMC2eNkeH_1gUgfLy9_0nHK8xSwun2MUbyY-QTFbnoBA">
                                         qwerty</option>
                                     <option
-                                        value="https://overlay.girlglock.com/?cfg=eNptUNtKwzAYfpdc5GpC07XbCORi6JVaGMrwcqQ5dGFpU5LGWfBWfAzxDX0Em2Sgm-aHHL7_O_yEskE9C2a0saRkcrHkUHX0F7jKQsGaskNjje94ghENVZcwcesmwcWy5gsEjR-06k4OhQwFpemGBMi4YKPNkeQFtJQr70gGeyucc4xqQRDKoOuF4GSeZbChfWu4kkpMwdP7ZB-pUTTx8jPUdz94CJa0VXoka6uo3qgXoWFtNA8dguBecdEa76ZYyLwbTHtPx8ntwRwR4b5tx0s4J5G_00IOGFQIzA5i3B0xeAKz1LGq2YdWDi61cxK4FIN1UjkMHtONY3Dzh178P0EZXdhr2MMUbLB6km-v7wD26KpczhyzRmthI8X1lAkMbrfVBmDw9fH5lo73xF6d2VfxL2LsN3-1xZs">
+                                        value="https://overlay.girlglock.com/?cfg=eNptkF1vwiAUhv8LF1xpUvqhhoQL43aniXFLdmko0Eqk0PCh678flJltZj0XLc-hz3mBMi9vghllLGlYt1pzKDX9BTdFKthSdu2tCZpnjGiqtoF5b9tnXK9bvkLQBK-k_jbUXSrYGe0z6OYH9srcSVlDS7kMjhRwtMI5x6gSBKECulEITqqigD0dB8NlJ0UcHNdXMSnRC80jFUTqm7Be6v4xdlbMsvh_-YcG_cNToI4OUk1kayVVR_kpFGyN4qlDELxILgYTXIwD57e3VContJPxzNJPMQyCLDhvhj2d4pyTuSPCwzBMz7gks-GsROcxOCCwiIc43zH4AIvcsbK_pFb5ACPlONTLssGhWlYI06VXz9qKJA3FYJuFDoO3_MUxeAHP2-v_wzWzJUVj3ioMdu-nPcABLZt1to6UiWg-bnevmW_-KA7zJc3qL4p11R4">
                                         wasd
                                         + duck + jump + mouse</option>
                                     <option
@@ -683,6 +750,8 @@
                         <option value="invisible">Invisible Spacer</option>
                         <option value="dummy">Dummy (Empty)</option>
                         <option value="mouse_side">Mouse Side (M4+M5)</option>
+                        <option value="mouse_pad">Mouse Pad</option>
+                        <option value="br">Line Break (br)</option>
                     </optgroup>
                     <optgroup label="Standard Keys">
                         <option value="key_a">A</option>
@@ -818,12 +887,33 @@
                     style="margin-bottom:5px;">
                 <input class="cfg-input" id="popupMouseSideM4" type="text" placeholder="M4 Label">
             </div>
+            <div class="cfg-field" id="popupAnchorField" style="display:none;">
+                <label class="cfg-label" for="popupAnchorSelect">anchor</label>
+                <select class="cfg-input" id="popupAnchorSelect">
+                    <option value="a-tl">top left</option>
+                    <option value="a-tc">top center</option>
+                    <option value="a-tr">top right</option>
+                    <option value="a-cl">center left</option>
+                    <option value="a-cc">center</option>
+                    <option value="a-cr">center right</option>
+                    <option value="a-bl">bottom left</option>
+                    <option value="a-bc">bottom center</option>
+                    <option value="a-br">bottom right</option>
+                </select>
+            </div>
             <div class="cfg-slider-field" style="margin-top:12px;">
                 <div class="cfg-slider-header">
                     <label class="cfg-label" for="popupWidthSlider">width</label>
                     <span class="cfg-slider-val" id="popupWidthValue">1.00u</span>
                 </div>
                 <input id="popupWidthSlider" class="cfg-range" max="700" min="1" step="1" type="range" value="100">
+            </div>
+            <div class="cfg-slider-field" id="popupHeightField" style="margin-top:8px; display:none;">
+                <div class="cfg-slider-header">
+                    <label class="cfg-label" for="popupHeightSlider">height</label>
+                    <span class="cfg-slider-val" id="popupHeightValue">1.00u</span>
+                </div>
+                <input id="popupHeightSlider" class="cfg-range" max="700" min="1" step="1" type="range" value="100">
             </div>
             <div class="popup-buttons">
                 <button class="cfg-btn cfg-btn--accent" id="popupAddBtn">add key</button>
@@ -837,8 +927,7 @@
     <script src="scripts/libs/pako.min.js"></script>
     <script type="module" src="scripts/main.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // overlay return button
+        document.addEventListener("DOMContentLoaded", () => {
             let timer;
             const returnBox = document.getElementById("return");
             document.addEventListener("mousemove", () => {
@@ -855,20 +944,40 @@
 
         });
 
-        function setDynamicScale() {
-            const container = document.getElementById('inner-overlay-container');
+        window.setDynamicScale = function setDynamicScale() {
+            const container = document.getElementById("inner-overlay-container");
             if (!container) return;
-            container.style.transform = 'translate(-50%, -50%)';
+            container.style.transformOrigin = "0 0";
+            container.style.transform = "none";
+
             requestAnimationFrame(() => {
-                const scaleX = window.innerWidth / container.offsetWidth;
-                const scaleY = window.innerHeight / container.offsetHeight;
-                const scale = Math.min(scaleX, scaleY) * 0.65;
-                container.style.transform = `translate(-50%, -50%) scale(${scale})`;
+                const cr = container.getBoundingClientRect();
+                let left = cr.left, top = cr.top, right = cr.right, bottom = cr.bottom;
+                container.querySelectorAll(".mousepad-wrap").forEach(wrap => {
+                    const wr = wrap.getBoundingClientRect();
+                    if (wr.width === 0 && wr.height === 0) return;
+                    if (wr.left < left) left = wr.left;
+                    if (wr.top < top) top = wr.top;
+                    if (wr.right > right) right = wr.right;
+                    if (wr.bottom > bottom) bottom = wr.bottom;
+                });
+
+                const totalW = right - left;
+                const totalH = bottom - top;
+                const scale = Math.min(window.innerWidth / totalW, window.innerHeight / totalH) * 0.65;
+                const vw = window.innerWidth / 2;
+                const vh = window.innerHeight / 2;
+                const unionCX = left + totalW / 2;
+                const unionCY = top + totalH / 2;
+                const tx = -(unionCX - vw) * scale;
+                const ty = -(unionCY - vh) * scale;
+
+                container.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
             });
         }
-        window.addEventListener('resize', setDynamicScale);
-        window.addEventListener('load', setDynamicScale);
-        setDynamicScale();
+        window.addEventListener("resize", window.setDynamicScale);
+        window.addEventListener("load", window.setDynamicScale);
+        window.setDynamicScale();
     </script>
 </body>
 

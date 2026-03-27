@@ -786,7 +786,7 @@ li { margin-bottom: 3px; }
   z-index: 10000;
   min-width: 300px;
   max-width: 380px;
-  background: var(--bg-raised);
+  background: var(--bg-base);
   border: 1px solid;
   border-color: var(--border-light) var(--border-dark) var(--border-dark) var(--border-light);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
@@ -1156,12 +1156,29 @@ li { margin-bottom: 3px; }
     display: flex;
     flex-direction: column;
     gap: calc(8px * var(--gap-modifier, 1));
+    overflow: visible;
 }
 
 .key-row {
     display: flex;
     gap: calc(8px * var(--gap-modifier, 1));
+    overflow: visible;
 }
+
+.mousepad-container {
+    position: relative;
+    overflow: visible;
+    align-self: flex-start;
+}
+
+.mousepad-wrap.key {
+    position: absolute !important;
+    min-width: 0 !important;
+    max-width: none !important;
+}
+
+
+
 
 .key {
     --key-base-width: var(--key-width, 50px);
@@ -1539,6 +1556,7 @@ li { margin-bottom: 3px; }
     flex: 1;
 }
 
+/* do this better eventually but im lazy */
 .u0-01 {
     --key-width: 1px;
 }

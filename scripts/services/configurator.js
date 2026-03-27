@@ -1,6 +1,12 @@
 //guh
 import { BROWSER_BUTTON_TO_KEY_NAME, BROWSER_CODE_TO_KEY_NAME, COLOR_PICKERS, DEFAULT_LAYOUT_STRINGS, HID_TO_KEY_NAME } from "../consts.js";
 
+function flashBtn(btn, label, original, ms = 2000) {
+    btn.textContent = label;
+    btn.classList.add("copied");
+    setTimeout(() => { btn.textContent = original; btn.classList.remove("copied"); }, ms);
+}
+
 export class ConfiguratorMode {
     constructor(utils, urlManager, layoutParser, visualizer) {
         this.utils = utils;
@@ -8,6 +14,9 @@ export class ConfiguratorMode {
         this.visualizer = visualizer;
         this.pickrInstances = {};
         this.urlDebounceTimer = null;
+        this.rebuildThrottleTimer = null;
+        this.rebuildLastFired = 0;
+        this.rebuildPending = null;
 
         document.getElementById("configurator").style.display = "flex";
         document.getElementById("overlay").classList.remove("show");
@@ -16,20 +25,13 @@ export class ConfiguratorMode {
         this.setupBackgroundVideo();
         this.setupCheatSheetToggle();
 
-        setTimeout(() => {
-            COLOR_PICKERS.forEach(cp => {
-                this.initPickrColorInput(cp.id, cp.defaultColor);
-            });
-        }, 25);
+        setTimeout(() => COLOR_PICKERS.forEach(cp => this.initPickrColorInput(cp.id, cp.defaultColor)), 25);
 
         const urlParams = new URLSearchParams(window.location.search);
-        const hasParams = urlParams.has("cfg") || Array.from(urlParams.keys()).some(key => key !== "ws");
+        const hasParams = urlParams.has("cfg") || Array.from(urlParams.keys()).some(k => k !== "ws");
 
-        if (hasParams) {
-            this.loadSettingsFromLink(true);
-        } else {
-            this.applyDefaultSettings();
-        }
+        if (hasParams) this.loadSettingsFromLink(true);
+        else this.applyDefaultSettings();
 
         this.setupConfigInputs();
         this.setupKeyAddButtons();
@@ -39,104 +41,101 @@ export class ConfiguratorMode {
     }
 
     applyDefaultSettings() {
-        const defaultSettings = {
-            wsaddress: "localhost",
-            wsport: "16899",
-            activecolor: "#5cf67d",
-            inactivecolor: "#808080",
-            backgroundcolor: "#1a1a1ad1",
-            activebgcolor: "#47bd61",
-            outlinecolor: "#4f4f4f",
-            fontcolor: "#ffffff",
-            glowradius: "24",
-            borderradius: "1",
-            pressscale: "110",
-            animationspeed: "300",
+        this.applySettings({
+            wsaddress: "localhost", wsport: "16899",
+            activecolor: "#5cf67d", inactivecolor: "#808080",
+            backgroundcolor: "#1a1a1ad1", activebgcolor: "#47bd61",
+            outlinecolor: "#4f4f4f", fontcolor: "#ffffff",
+            glowradius: "24", borderradius: "1",
+            pressscale: "110", animationspeed: "300",
             fontfamily: "ArialPixel",
-            hidemouse: false,
-            hidescrollcombo: false,
-            boldfont: true,
-            analogmode: false,
-            gapmodifier: "100",
-            outlinescalepressed: "2",
-            outlinescaleunpressed: "2",
+            hidemouse: false, hidescrollcombo: false, boldfont: true,
+            analogmode: false, gapmodifier: "100",
+            outlinescalepressed: "2", outlinescaleunpressed: "2",
             customLayoutRow1: DEFAULT_LAYOUT_STRINGS.row1,
             customLayoutRow2: DEFAULT_LAYOUT_STRINGS.row2,
             customLayoutRow3: DEFAULT_LAYOUT_STRINGS.row3,
             customLayoutRow4: DEFAULT_LAYOUT_STRINGS.row4,
             customLayoutRow5: DEFAULT_LAYOUT_STRINGS.row5,
             customLayoutMouse: DEFAULT_LAYOUT_STRINGS.mouse,
-            keylegendmode: "fading",
-            forcedisableanalog: false,
-        };
-
-        this.applySettings(defaultSettings);
+            keylegendmode: "fading", forcedisableanalog: false,
+            mousetrailsensitivity: "100",
+            mousetrailfadeout: "600",
+            mousetrailrecenter: true,
+        });
     }
 
     initDefaultLayoutValues() {
-        document.getElementById("customLayoutRow1").value = document.getElementById("customLayoutRow1").value || DEFAULT_LAYOUT_STRINGS.row1;
-        document.getElementById("customLayoutRow2").value = document.getElementById("customLayoutRow2").value || DEFAULT_LAYOUT_STRINGS.row2;
-        document.getElementById("customLayoutRow3").value = document.getElementById("customLayoutRow3").value || DEFAULT_LAYOUT_STRINGS.row3;
-        document.getElementById("customLayoutRow4").value = document.getElementById("customLayoutRow4").value || DEFAULT_LAYOUT_STRINGS.row4;
-        document.getElementById("customLayoutRow5").value = document.getElementById("customLayoutRow5").value || DEFAULT_LAYOUT_STRINGS.row5;
-        document.getElementById("customLayoutMouse").value = document.getElementById("customLayoutMouse").value || DEFAULT_LAYOUT_STRINGS.mouse;
+        const rowIds = ["customLayoutRow1", "customLayoutRow2", "customLayoutRow3", "customLayoutRow4", "customLayoutRow5", "customLayoutMouse"];
+        const keys = ["row1", "row2", "row3", "row4", "row5", "mouse"];
+        rowIds.forEach((id, i) => {
+            const el = document.getElementById(id);
+            if (el && !el.value) el.value = DEFAULT_LAYOUT_STRINGS[keys[i]];
+        });
     }
 
     getCurrentSettings() {
+        const get = (id) => document.getElementById(id);
+        const val = (id) => get(id)?.value ?? "";
+        const chk = (id) => get(id)?.checked ?? false;
+
         return {
-            wsaddress: document.getElementById("wsaddress").value || "localhost",
-            wsport: document.getElementById("wsport").value || "16899",
-            wsauth: document.getElementById("wsauth").value || "",
-            activecolor: document.getElementById("activecolorhex").value,
-            inactivecolor: document.getElementById("inactivecolorhex").value,
-            backgroundcolor: document.getElementById("backgroundcolorhex").value,
-            activebgcolor: document.getElementById("activebgcolorhex").value,
-            outlinecolor: document.getElementById("outlinecolorhex").value,
-            fontcolor: document.getElementById("fontcolorhex").value,
-            glowradius: document.getElementById("glowradius").value,
-            borderradius: document.getElementById("borderradius").value,
-            pressscale: document.getElementById("pressscale").value,
-            animationspeed: document.getElementById("animationspeed").value,
-            fontfamily: document.getElementById("fontfamily").value,
-            hidemouse: document.getElementById("hidemouse").checked,
-            hidescrollcombo: document.getElementById("hidescrollcombo").checked,
-            boldfont: document.getElementById("boldfont") ? document.getElementById("boldfont").checked : false,
-            analogmode: document.getElementById("analogmode") ? document.getElementById("analogmode").checked : false,
-
-            gapmodifier: document.getElementById("gapmodifier") ? document.getElementById("gapmodifier").value : "100",
-            outlinescalepressed: document.getElementById("outlinescalepressed") ? document.getElementById("outlinescalepressed").value : "2",
-            outlinescaleunpressed: document.getElementById("outlinescaleunpressed") ? document.getElementById("outlinescaleunpressed").value : "2",
-
-            customLayoutRow1: document.getElementById("customLayoutRow1") ? document.getElementById("customLayoutRow1").value : "",
-            customLayoutRow2: document.getElementById("customLayoutRow2") ? document.getElementById("customLayoutRow2").value : "",
-            customLayoutRow3: document.getElementById("customLayoutRow3") ? document.getElementById("customLayoutRow3").value : "",
-            customLayoutRow4: document.getElementById("customLayoutRow4") ? document.getElementById("customLayoutRow4").value : "",
-            customLayoutRow5: document.getElementById("customLayoutRow5") ? document.getElementById("customLayoutRow5").value : "",
-            customLayoutMouse: document.getElementById("customLayoutMouse") ? document.getElementById("customLayoutMouse").value : "",
-
-            keylegendmode: document.getElementById("keylegendmode") ? document.getElementById("keylegendmode").value : "fading",
-            forcedisableanalog: document.getElementById("forcedisableanalog") ? document.getElementById("forcedisableanalog").checked : false,
+            wsaddress: val("wsaddress") || "localhost",
+            wsport: val("wsport") || "16899",
+            wsauth: val("wsauth"),
+            activecolor: val("activecolorhex"),
+            inactivecolor: val("inactivecolorhex"),
+            backgroundcolor: val("backgroundcolorhex"),
+            activebgcolor: val("activebgcolorhex"),
+            outlinecolor: val("outlinecolorhex"),
+            fontcolor: val("fontcolorhex"),
+            glowradius: val("glowradius"),
+            borderradius: val("borderradius"),
+            pressscale: val("pressscale"),
+            animationspeed: val("animationspeed"),
+            fontfamily: val("fontfamily"),
+            hidemouse: chk("hidemouse"),
+            hidescrollcombo: chk("hidescrollcombo"),
+            boldfont: chk("boldfont"),
+            analogmode: chk("analogmode"),
+            gapmodifier: val("gapmodifier") || "100",
+            outlinescalepressed: val("outlinescalepressed") || "2",
+            outlinescaleunpressed: val("outlinescaleunpressed") || "2",
+            customLayoutRow1: val("customLayoutRow1"),
+            customLayoutRow2: val("customLayoutRow2"),
+            customLayoutRow3: val("customLayoutRow3"),
+            customLayoutRow4: val("customLayoutRow4"),
+            customLayoutRow5: val("customLayoutRow5"),
+            customLayoutMouse: val("customLayoutMouse"),
+            keylegendmode: val("keylegendmode") || "inverting",
+            forcedisableanalog: chk("forcedisableanalog"),
+            mousetrailsensitivity: val("mousetrailsensitivity") || "100",
+            mousetrailfadeout: val("mousetrailfadeout") || "600",
+            mousetrailrecenter: chk("mousetrailrecenter"),
         };
     }
 
     updateSliderLabel(input) {
         const label = document.getElementById(input.id + "value");
-        if (label) {
-            let suffix = "";
-            if (input.id === "outlinescalepressed" || input.id === "outlinescaleunpressed") {
-                label.textContent = input.value + "px";
-                return;
-            }
-            if (input.id.includes("radius")) suffix = "px";
-            else if (input.id.includes("scale")) suffix = "x";
-            else if (input.id === "opacity" || input.id.includes("speed") || input.id.includes("modifier")) suffix = "%";
+        if (!label) return;
 
-            let val = input.value;
-            if (input.id.includes("scale") && !input.id.includes("pressscale")) val = (val / 100).toFixed(1);
-            else if (input.id === "pressscale") val = (val / 100).toFixed(2);
-
-            label.textContent = val + suffix;
+        const id = input.id;
+        if (id === "outlinescalepressed" || id === "outlinescaleunpressed") {
+            label.textContent = input.value + "px"; return;
         }
+        if (id === "mousetrailsensitivity") {
+            label.textContent = (input.value / 100).toFixed(1) + "x"; return;
+        }
+        if (id === "mousetrailfadeout") {
+            label.textContent = input.value + "ms"; return;
+        }
+
+        let suffix = "", val = input.value;
+        if (id.includes("radius")) suffix = "px";
+        else if (id.includes("scale")) { suffix = "x"; val = id === "pressscale" ? (val / 100).toFixed(2) : (val / 100).toFixed(1); }
+        else if (id === "opacity" || id.includes("speed") || id.includes("modifier")) suffix = "%";
+
+        label.textContent = val + suffix;
     }
 
     applySettings(settings) {
@@ -144,24 +143,19 @@ export class ConfiguratorMode {
 
         const applyValue = (id, value) => {
             const el = document.getElementById(id);
-            if (el) {
-                if (el.type === "checkbox") {
-                    el.checked = value === "true" || value === "1" || value === true;
-                    el.dispatchEvent(new Event("change", { bubbles: true }));
-                } else {
-                    el.value = value !== undefined && value !== null ? value : "";
+            if (!el) return;
 
-                    if (id.includes("colorhex")) {
-                        const pickrId = id.replace("hex", "");
-                        const pickr = this.pickrInstances[pickrId];
-                        if (pickr && value) {
-                            try {
-                                pickr.setColor(value, true);
-                            } catch (error) {
-                            }
-                        }
-                    }
+            if (el.type === "checkbox") {
+                el.checked = value === "true" || value === "1" || value === true;
+                el.dispatchEvent(new Event("change", { bubbles: true }));
+            } else {
+                el.value = value ?? "";
+
+                if (id.includes("colorhex")) {
+                    const pickr = this.pickrInstances[id.replace("hex", "")];
+                    if (pickr && value) { try { pickr.setColor(value, true); } catch { /* ignore */ } }
                 }
+
                 if (el.type === "range") {
                     this.updateSliderLabel(el);
                     el.dispatchEvent(new Event("input", { bubbles: true }));
@@ -187,53 +181,56 @@ export class ConfiguratorMode {
         applyValue("boldfont", settings.boldfont);
         applyValue("outlinescalepressed", settings.outlinescalepressed ?? "2");
         applyValue("outlinescaleunpressed", settings.outlinescaleunpressed ?? "2");
-
-        applyValue("customLayoutRow1", settings.customLayoutRow1 !== undefined ? settings.customLayoutRow1 : "");
-        applyValue("customLayoutRow2", settings.customLayoutRow2 !== undefined ? settings.customLayoutRow2 : "");
-        applyValue("customLayoutRow3", settings.customLayoutRow3 !== undefined ? settings.customLayoutRow3 : "");
-        applyValue("customLayoutRow4", settings.customLayoutRow4 !== undefined ? settings.customLayoutRow4 : "");
-        applyValue("customLayoutRow5", settings.customLayoutRow5 !== undefined ? settings.customLayoutRow5 : "");
-        applyValue("customLayoutMouse", settings.customLayoutMouse !== undefined ? settings.customLayoutMouse : "");
-
+        applyValue("customLayoutRow1", settings.customLayoutRow1 ?? "");
+        applyValue("customLayoutRow2", settings.customLayoutRow2 ?? "");
+        applyValue("customLayoutRow3", settings.customLayoutRow3 ?? "");
+        applyValue("customLayoutRow4", settings.customLayoutRow4 ?? "");
+        applyValue("customLayoutRow5", settings.customLayoutRow5 ?? "");
+        applyValue("customLayoutMouse", settings.customLayoutMouse ?? "");
         applyValue("gapmodifier", settings.gapmodifier);
         applyValue("keylegendmode", settings.keylegendmode);
         applyValue("forcedisableanalog", settings.forcedisableanalog);
+        applyValue("mousetrailsensitivity", settings.mousetrailsensitivity ?? "100");
+        applyValue("mousetrailfadeout", settings.mousetrailfadeout ?? "600");
+        applyValue("mousetrailrecenter", settings.mousetrailrecenter ?? true);
     }
 
     updateState(settings = null) {
         if (!settings) settings = this.getCurrentSettings();
-
         this.visualizer.applyStyles(settings, true);
 
-        clearTimeout(this.rebuildDebounceTimer);
-        this.rebuildDebounceTimer = setTimeout(() => {
-            this.visualizer.rebuildInterface(settings);
-        }, 100);
+        const THROTTLE_MS = 100;
+        const now = performance.now();
+        this.rebuildPending = settings;
+
+        clearTimeout(this.rebuildThrottleTimer);
+        this.rebuildThrottleTimer = setTimeout(() => {
+            this.visualizer.rebuildInterface(this.rebuildPending);
+            this.rebuildLastFired = performance.now();
+            this.rebuildPending = null;
+        }, Math.max(0, THROTTLE_MS - (now - this.rebuildLastFired)));
 
         clearTimeout(this.urlDebounceTimer);
-        this.urlDebounceTimer = setTimeout(() => {
-            this.updateGeneratedLink(settings);
-        }, 250);
+        this.urlDebounceTimer = setTimeout(() => this.updateGeneratedLink(settings), 250);
     }
 
     updateGeneratedLink(settings) {
         const paramsString = this.urlManager.buildURLParams(settings);
-        const baseURL = `${window.location.origin}${window.location.pathname}`;
-
+        const base = `${window.location.origin}${window.location.pathname}`;
         const wsParam = `ws=${settings.wsaddress || "localhost"}:${settings.wsport || "16899"}`;
         const linkInput = document.getElementById("generatedlink");
 
         const compressed = this.urlManager.compressSettings(paramsString);
         if (compressed) {
-            const url = baseURL + `?cfg=${compressed}`;
-            window.history.replaceState({}, "", `${url}`);
+            const url = `${base}?cfg=${compressed}`;
+            window.history.replaceState({}, "", url);
             linkInput.value = `${url}&${wsParam}`;
             console.clear();
-            console.log(`compressed link: ${url}`);
-            console.log(`uncompressed link: ${baseURL}?${paramsString}`);
+            console.log(`compressed params: ${compressed}`);
+            console.log(`uncompressed params: ${paramsString}`);
         } else {
-            window.history.replaceState({}, "", `${baseURL}?${paramsString}`);
-            linkInput.value = `${baseURL}?${paramsString}&${wsParam}`;
+            window.history.replaceState({}, "", `${base}?${paramsString}`);
+            linkInput.value = `${base}?${paramsString}&${wsParam}`;
         }
 
         const container = linkInput.closest(".link-container") || document.querySelector(".link-container");
@@ -244,146 +241,77 @@ export class ConfiguratorMode {
     loadSettingsFromLink(fromCurrentUrl = false) {
         const linkInput = document.getElementById("generatedlink");
         const loadBtn = document.getElementById("loadbtn");
+        const flash = (msg) => flashBtn(loadBtn, msg, "⟳ load url");
 
-        let urlString = fromCurrentUrl === true
-            ? window.location.href
-            : linkInput.value;
-
-        if (!urlString || urlString.trim() === "") {
-            loadBtn.textContent = "empty";
-            loadBtn.classList.add("copied");
-            setTimeout(() => {
-                loadBtn.textContent = "⟳ load url";
-                loadBtn.classList.remove("copied");
-            }, 2000);
-            return;
-        }
-
-        if (!urlString.startsWith("http")) {
-            urlString = window.location.origin + urlString;
-        }
+        let urlString = fromCurrentUrl === true ? window.location.href : linkInput.value;
+        if (!urlString?.trim()) { flash("empty"); return; }
+        if (!urlString.startsWith("http")) urlString = window.location.origin + urlString;
 
         try {
             const url = new URL(urlString);
             const params = url.searchParams;
             const settings = {};
 
-            let wsAddress = "localhost";
-            let wsPort = "16899";
+            let wsAddress = "localhost", wsPort = "16899";
             if (params.has("ws")) {
-                const wsConfig = params.get("ws").split(":");
-                wsAddress = wsConfig[0] || "localhost";
-                wsPort = wsConfig[1] || "16899";
+                const ws = params.get("ws").split(":");
+                wsAddress = ws[0] || "localhost";
+                wsPort = ws[1] || "16899";
             }
 
-            if (params.has("cfg")) {
-                const compressed = params.get("cfg");
-                const decompressed = this.urlManager.decompressSettings(compressed);
+            const sourceParams = params.has("cfg")
+                ? (() => {
+                    const dec = this.urlManager.decompressSettings(params.get("cfg"));
+                    if (!dec) { flash("decompress error"); return null; }
+                    return new URLSearchParams(dec);
+                })()
+                : params;
 
-                if (decompressed) {
-                    const decompressedParams = new URLSearchParams(decompressed);
-                    for (const key of decompressedParams.keys()) {
-                        let value = decompressedParams.get(key);
-                        if (key !== "ws" && value !== null && value !== "") {
-                            if (key.includes("color")) {
-                                value = this.utils.normalizeColorValue(value);
-                            }
-                            settings[key] = value;
-                        }
-                    }
-                } else {
-                    loadBtn.textContent = "decompress error";
-                    loadBtn.classList.add("copied");
-                    setTimeout(() => {
-                        loadBtn.textContent = "⟳ load url";
-                        loadBtn.classList.remove("copied");
-                    }, 2000);
-                    return;
-                }
-            } else {
-                for (const key of params.keys()) {
-                    let value = params.get(key);
-                    if (key !== "ws" && value !== null && value !== "") {
-                        if (key.includes("color")) {
-                            value = this.utils.normalizeColorValue(value);
-                        }
-                        settings[key] = value;
-                    }
-                }
+            if (!sourceParams) return;
+
+            for (const key of sourceParams.keys()) {
+                if (key === "ws") continue;
+                let value = sourceParams.get(key);
+                if (value == null || value === "") continue;
+                if (key.includes("color")) value = this.utils.normalizeColorValue(value);
+                settings[key] = value;
             }
 
             settings.wsaddress = wsAddress;
             settings.wsport = wsPort;
+            if (!settings.keylegendmode) settings.keylegendmode = "fading";
+            if (settings.forcedisableanalog == null) settings.forcedisableanalog = false;
 
-            if (!settings.keylegendmode) {
-                settings.keylegendmode = "fading";
-            }
-            if (settings.forcedisableanalog === undefined || settings.forcedisableanalog === null) {
-                settings.forcedisableanalog = false;
-            }
+            if (!Object.keys(settings).length) { flash("no params"); return; }
 
-            if (Object.keys(settings).length > 0) {
-                this.applySettings(settings);
-                this.updateState();
-
-                loadBtn.textContent = "loaded";
-                loadBtn.classList.add("copied");
-                setTimeout(() => {
-                    loadBtn.textContent = "⟳ load url";
-                    loadBtn.classList.remove("copied");
-                }, 2000);
-            } else {
-                loadBtn.textContent = "no params";
-                loadBtn.classList.add("copied");
-                setTimeout(() => {
-                    loadBtn.textContent = "⟳ load url";
-                    loadBtn.classList.remove("copied");
-                }, 2000);
-            }
-        } catch (e) {
-            loadBtn.textContent = "error";
-            loadBtn.classList.add("copied");
-            setTimeout(() => {
-                loadBtn.textContent = "⟳ load url";
-                loadBtn.classList.remove("copied");
-            }, 2000);
+            this.applySettings(settings);
+            this.updateState();
+            flash("loaded");
+        } catch {
+            flashBtn(loadBtn, "error", "⟳ load url");
         }
     }
 
     initPickrColorInput(pickrId, defaultColor) {
         const pickrEl = document.getElementById(pickrId);
         const hexInput = document.getElementById(pickrId + "hex");
-
         if (!pickrEl || !hexInput) return;
 
         const pickr = Pickr.create({
-            el: pickrEl,
-            theme: "classic",
+            el: pickrEl, theme: "classic",
             default: hexInput.value || defaultColor,
             components: {
-                preview: true,
-                opacity: true,
-                hue: true,
-                interaction: {
-                    hex: true,
-                    rgba: true,
-                    hsva: true,
-                    input: true,
-                    clear: false,
-                    save: true
-                }
+                preview: true, opacity: true, hue: true,
+                interaction: { hex: true, rgba: true, hsva: true, input: true, clear: false, save: true }
             },
-            strings: {
-                save: "Apply"
-            },
+            strings: { save: "Apply" },
             swatches: []
         });
 
         this.pickrInstances[pickrId] = pickr;
 
         pickr.on("change", (color) => {
-            const hexA = color.toHEXA().toString();
-            hexInput.value = hexA.toLowerCase();
+            hexInput.value = color.toHEXA().toString().toLowerCase();
             pickr.applyColor();
             this.updateState();
         });
@@ -391,54 +319,37 @@ export class ConfiguratorMode {
         hexInput.addEventListener("input", (e) => {
             let val = e.target.value.toLowerCase().replace(/[^0-9a-f#]/g, "");
             if (!val.startsWith("#")) val = "#" + val;
-            if (val.length > 9) val = val.substring(0, 9);
+            if (val.length > 9) val = val.slice(0, 9);
             e.target.value = val;
-
             if (val.length === 7 || val.length === 9) {
-                try {
-                    pickr.setColor(val, true);
-                } catch (error) {
-                }
+                try { pickr.setColor(val, true); } catch { /* ignore */ }
                 this.updateState();
             }
         });
 
-        try {
-            pickr.setColor(hexInput.value || defaultColor, true);
-        } catch (error) {
-        }
+        try { pickr.setColor(hexInput.value || defaultColor, true); } catch { /* ignore */ }
     }
 
     setupConfigInputs() {
-        const inputs = document.querySelectorAll(".config-input");
-        inputs.forEach(input => {
+        for (const input of document.querySelectorAll(".config-input")) {
             input.addEventListener("input", () => {
-                if (input.type === "range")
-                    this.updateSliderLabel(input);
-                else if (input.classList.contains("color-hex-input"))
-                    return;
-
+                if (input.type === "range") this.updateSliderLabel(input);
+                else if (input.classList.contains("color-hex-input")) return;
                 this.updateState();
             });
-        });
+        }
 
         document.getElementById("copybtn").addEventListener("click", this.copyLink.bind(this));
         document.getElementById("loadbtn").addEventListener("click", this.loadSettingsFromLink.bind(this));
 
-        const layoutPresets = document.getElementById("layoutPresets");
-        if (layoutPresets) {
-            layoutPresets.addEventListener("change", (e) => {
-                const presetUrl = e.target.value;
-                if (presetUrl) {
-                    const linkInput = document.getElementById("generatedlink");
-                    linkInput.value = presetUrl;
-                    this.loadSettingsFromLink(false);
-                    setTimeout(() => {
-                        e.target.selectedIndex = 0;
-                    }, 100);
-                }
-            });
-        }
+        document.getElementById("layoutPresets")?.addEventListener("change", (e) => {
+            const presetUrl = e.target.value;
+            if (presetUrl) {
+                document.getElementById("generatedlink").value = presetUrl;
+                this.loadSettingsFromLink(false);
+                setTimeout(() => { e.target.selectedIndex = 0; }, 100);
+            }
+        });
     }
 
     setupPreviewInputListeners() {
@@ -447,88 +358,65 @@ export class ConfiguratorMode {
         document.addEventListener("mousedown", e => this.handlePreviewInput(e, "mouse_pressed"));
         document.addEventListener("mouseup", e => this.handlePreviewInput(e, "mouse_released"));
         document.addEventListener("wheel", e => this.handlePreviewInput(e, "mouse_wheel"), { passive: true });
+        document.addEventListener("mousemove", e => this.handlePreviewInput(e, "mouse_moved"));
     }
 
     handlePreviewInput(event, type) {
-        if (!this.visualizer.previewElements) return;
-
-        const isTypingField = event.target.matches("input[type='text'], input[type='number'], textarea, .color-hex-input");
+        const els = this.visualizer.previewElements;
+        if (!els) return;
 
         if (type === "key_pressed" || type === "key_released") {
+            const isTyping = event.target.matches("input[type='text'], input[type='number'], textarea, .color-hex-input");
             let keyName = BROWSER_CODE_TO_KEY_NAME[event.code.toLowerCase()];
-            let elements = this.visualizer.previewElements.keyElements.get(keyName);
+            let elements = els.keyElements.get(keyName);
 
             if (!elements && event.key) {
-                const keyLabel = event.key.toUpperCase();
-                for (const [key, els] of this.visualizer.previewElements.keyElements.entries()) {
-                    if (els.some(el => el.textContent === keyLabel)) {
-                        keyName = key;
-                        elements = els;
-                        break;
-                    }
+                const label = event.key.toUpperCase();
+                for (const [k, elList] of els.keyElements) {
+                    if (elList.some(el => el.textContent === label)) { keyName = k; elements = elList; break; }
                 }
             }
 
-            if (elements && elements.length > 0) {
-                elements.forEach(el => {
-                    this.visualizer.updateElementState(el, keyName, type === "key_pressed", this.visualizer.activeKeys);
-                });
-
-                if (!isTypingField) {
-                    event.preventDefault();
-                } else if (keyName === "key_tab" || keyName === "key_escape") {
-                    event.preventDefault();
-                }
+            if (elements?.length) {
+                const isPress = type === "key_pressed";
+                for (const el of elements) this.visualizer.updateElementState(el, keyName, isPress, this.visualizer.activeKeys);
+                if (!isTyping || keyName === "key_tab" || keyName === "key_escape") event.preventDefault();
             }
         } else if (type === "mouse_pressed" || type === "mouse_released") {
             const btnName = BROWSER_BUTTON_TO_KEY_NAME[event.button];
-            if (btnName) {
-                const elements = this.visualizer.previewElements.mouseElements.get(btnName);
-                if (elements && elements.length > 0) {
-                    elements.forEach(el => {
-                        this.visualizer.updateElementState(el, btnName, type === "mouse_pressed", this.visualizer.activeMouseButtons);
-                    });
-                }
+            if (!btnName) return;
+            const elements = els.mouseElements.get(btnName);
+            if (elements?.length) {
+                const isPress = type === "mouse_pressed";
+                for (const el of elements) this.visualizer.updateElementState(el, btnName, isPress, this.visualizer.activeMouseButtons);
             }
         } else if (type === "mouse_wheel") {
-            const dir = Math.sign(event.deltaY);
-            if (this.visualizer.previewElements.scrollDisplays && this.visualizer.previewElements.scrollDisplays.length > 0) {
-                this.visualizer.handleScroll(dir);
-            }
+            if (els.scrollDisplays?.length) this.visualizer.handleScroll(Math.sign(event.deltaY));
+        } else if (type === "mouse_moved") {
+            if (this.visualizer.mousePadCanvas)
+                this.visualizer.handleMouseMove(event.movementX, event.movementY);
         }
     }
 
     setupBackgroundVideo() {
         const video = document.getElementById("bgvideo");
         const source = document.getElementById("bgsource");
-
         if (video && source) {
-            const randomIndex = Math.floor(Math.random() * 2) + 1;
-            source.src = `./media/preview_gameplay${randomIndex}.mp4`;
+            source.src = `./media/preview_gameplay${Math.floor(Math.random() * 2) + 1}.mp4`;
             video.load();
             video.play();
         }
     }
 
     setupCheatSheetToggle() {
-        const allDetails = document.querySelectorAll(".fullscreen-details");
-
-        allDetails.forEach(detailsTag => {
-            const closeBtn = detailsTag.querySelector(".close-btn");
-            if (!closeBtn) return;
-
-            closeBtn.addEventListener("click", e => {
-                e.preventDefault();
-                detailsTag.open = false;
-            });
-
-            const updateCloseButtonVisibility = () => {
-                closeBtn.style.display = detailsTag.open ? "block" : "none";
-            };
-
-            updateCloseButtonVisibility();
-            detailsTag.addEventListener("toggle", updateCloseButtonVisibility);
-        });
+        for (const details of document.querySelectorAll(".fullscreen-details")) {
+            const closeBtn = details.querySelector(".close-btn");
+            if (!closeBtn) continue;
+            closeBtn.addEventListener("click", (e) => { e.preventDefault(); details.open = false; });
+            const update = () => { closeBtn.style.display = details.open ? "block" : "none"; };
+            update();
+            details.addEventListener("toggle", update);
+        }
     }
 
     async copyLink() {
@@ -536,16 +424,11 @@ export class ConfiguratorMode {
         const copyBtn = document.getElementById("copybtn");
         try {
             await navigator.clipboard.writeText(linkInput.value);
-            copyBtn.textContent = "copied";
-            copyBtn.classList.add("copied");
-            setTimeout(() => {
-                copyBtn.textContent = "⎘ copy url";
-                copyBtn.classList.remove("copied");
-            }, 2000);
-        } catch (err) {
+        } catch {
             linkInput.select();
             document.execCommand("copy");
         }
+        flashBtn(copyBtn, "copied", "⎘ copy url");
     }
 
     setupAnalogSense() {
@@ -561,112 +444,84 @@ export class ConfiguratorMode {
         const DIGITAL_THRESHOLD = 0.5;
 
         const handleAnalogReport = (activeKeys) => {
-            if (!this.visualizer.previewElements) return;
+            const viz = this.visualizer;
+            if (!viz.previewElements) return;
             if (document.getElementById("forcedisableanalog")?.checked) return;
-
-            const forcedisable = document.getElementById("forcedisableanalog")?.checked;
-            if (forcedisable) return;
 
             const currentScancodes = new Set(activeKeys.map(k => String(k.scancode)));
 
-            activeKeys.forEach(({ scancode, value }) => {
+            for (const { scancode, value } of activeKeys) {
                 const keyName = HID_TO_KEY_NAME[scancode];
-                if (!keyName) return;
+                if (!keyName) continue;
 
-                if (!this.visualizer.forceDisableAnalog) {
-                    if (!this.visualizer.analogMode) {
-                        this.visualizer.analogMode = true;
-                        this.visualizer.applyStyles(this.getCurrentSettings(), true);
-                    }
-                    this.visualizer.setAnalogDepthTarget(keyName, value);
+                if (!viz.forceDisableAnalog) {
+                    if (!viz.analogMode) { viz.analogMode = true; viz.applyStyles(this.getCurrentSettings(), true); }
+                    viz.setAnalogDepthTarget(keyName, value);
                 }
 
                 const wasAbove = (this.analogSensePrevDepths[scancode] ?? 0) >= DIGITAL_THRESHOLD;
                 const isAbove = value >= DIGITAL_THRESHOLD;
 
-                if (isAbove && !wasAbove) {
-                    const elements = this.visualizer.previewElements.keyElements.get(keyName);
-                    if (elements) {
-                        elements.forEach(el => {
-                            this.visualizer.updateElementState(el, keyName, true, this.visualizer.activeKeys);
-                        });
-                    }
-                    this.analogSenseActiveKeys.add(scancode);
-                } else if (!isAbove && wasAbove) {
-                    const elements = this.visualizer.previewElements.keyElements.get(keyName);
-                    if (elements) {
-                        elements.forEach(el => {
-                            this.visualizer.updateElementState(el, keyName, false, this.visualizer.activeKeys);
-                        });
-                    }
-                    this.analogSenseActiveKeys.delete(scancode);
+                if (isAbove !== wasAbove) {
+                    const elements = viz.previewElements.keyElements.get(keyName);
+                    if (elements) for (const el of elements) viz.updateElementState(el, keyName, isAbove, viz.activeKeys);
+                    if (isAbove) this.analogSenseActiveKeys.add(scancode);
+                    else this.analogSenseActiveKeys.delete(scancode);
                 }
 
                 this.analogSensePrevDepths[scancode] = value;
-            });
+            }
 
-            this.analogSenseActiveKeys.forEach(scancode => {
-                if (!currentScancodes.has(String(scancode))) {
-                    const keyName = HID_TO_KEY_NAME[scancode];
-                    if (keyName) {
-                        if ((this.analogSensePrevDepths[scancode] ?? 0) >= DIGITAL_THRESHOLD) {
-                            const elements = this.visualizer.previewElements.keyElements.get(keyName);
-                            if (elements) {
-                                elements.forEach(el => {
-                                    this.visualizer.updateElementState(el, keyName, false, this.visualizer.activeKeys);
-                                });
-                            }
-                        }
-                        this.visualizer.setAnalogDepthTarget(keyName, 0);
+            for (const scancode of this.analogSenseActiveKeys) {
+                if (currentScancodes.has(String(scancode))) continue;
+                const keyName = HID_TO_KEY_NAME[scancode];
+                if (keyName) {
+                    if ((this.analogSensePrevDepths[scancode] ?? 0) >= DIGITAL_THRESHOLD) {
+                        const elements = viz.previewElements.keyElements.get(keyName);
+                        if (elements) for (const el of elements) viz.updateElementState(el, keyName, false, viz.activeKeys);
                     }
-                    delete this.analogSensePrevDepths[scancode];
-                    this.analogSenseActiveKeys.delete(scancode);
+                    viz.setAnalogDepthTarget(keyName, 0);
                 }
-            });
+                delete this.analogSensePrevDepths[scancode];
+                this.analogSenseActiveKeys.delete(scancode);
+            }
         };
 
-        const setConnectedState = (name) => {
+        const setConnected = (name) => {
             statusEl.textContent = `connected: ${name}`;
             statusEl.style.color = "#5cf67d";
             btn.textContent = "disconnect";
             btn.classList.add("connected");
         };
 
-        const disconnectDevice = () => {
-            if (this.analogSenseProvider) {
-                this.analogSenseProvider.stopListening();
-                this.analogSenseProvider = null;
-            }
-
+        const disconnect = () => {
+            this.analogSenseProvider?.stopListening();
+            this.analogSenseProvider = null;
             this.analogSenseActiveKeys.clear();
             this.analogSensePrevDepths = {};
 
-            if (this.visualizer.analogMode) {
-                this.visualizer.analogMode = false;
-                if (this.visualizer.analogRafId) {
-                    cancelAnimationFrame(this.visualizer.analogRafId);
-                    this.visualizer.analogRafId = null;
-                }
-                this.visualizer.analogTargetDepths = {};
-                this.visualizer.analogCurrentDepths = {};
+            const viz = this.visualizer;
+            if (viz.analogMode) {
+                viz.analogMode = false;
+                if (viz.analogRafId) { cancelAnimationFrame(viz.analogRafId); viz.analogRafId = null; }
+                viz.analogTargetDepths = {};
+                viz.analogCurrentDepths = {};
 
-                if (this.visualizer.previewElements) {
-                    this.visualizer.previewElements.keyElements.forEach((elements, keyName) => {
-                        elements.forEach(el => {
+                if (viz.previewElements) {
+                    viz.previewElements.keyElements.forEach((elements, keyName) => {
+                        for (const el of elements) {
                             if (el.classList.contains("active") || el.classList.contains("analog-key")) {
-                                this.visualizer.updateElementState(el, keyName, false, this.visualizer.activeKeys);
+                                viz.updateElementState(el, keyName, false, viz.activeKeys);
                                 el.classList.remove("analog-key");
                                 el.style.removeProperty("--analog-depth");
-                                const primaryLabel = el.querySelector(".key-label-primary");
-                                if (primaryLabel) primaryLabel.style.removeProperty("color");
-                                const invertedLabel = el.querySelector(".key-label-inverted");
-                                if (invertedLabel) invertedLabel.style.clipPath = "inset(100% 0 0 0)";
+                                el.querySelector(".key-label-primary")?.style.removeProperty("color");
+                                const inv = el.querySelector(".key-label-inverted");
+                                if (inv) inv.style.clipPath = "inset(100% 0 0 0)";
                             }
-                        });
+                        }
                     });
                 }
-
-                this.visualizer.applyStyles(this.getCurrentSettings(), true);
+                viz.applyStyles(this.getCurrentSettings(), true);
             }
 
             statusEl.textContent = "disconnected";
@@ -676,40 +531,22 @@ export class ConfiguratorMode {
         };
 
         const connectDevice = async (provider) => {
-            if (this.analogSenseProvider) {
-                this.analogSenseProvider.stopListening();
-            }
+            this.analogSenseProvider?.stopListening();
             this.analogSenseProvider = provider;
             provider.startListening(handleAnalogReport);
-            const name = provider.getProductName();
-            setConnectedState(name);
+            setConnected(provider.getProductName());
         };
 
-        analogsense.getDevices().then(devices => {
-            if (devices.length > 0) {
-                connectDevice(devices[0]);
-            }
-        });
+        analogsense.getDevices().then(devices => { if (devices.length) connectDevice(devices[0]); });
 
         btn.addEventListener("click", async () => {
-            if (this.analogSenseProvider) {
-                disconnectDevice();
-                return;
-            }
-
+            if (this.analogSenseProvider) { disconnect(); return; }
             try {
                 const device = await analogsense.requestDevice();
-                if (device) {
-                    await connectDevice(device);
-                } else {
-                    statusEl.textContent = "no compatible keyboard found";
-                    statusEl.style.color = "#f65c5c";
-                }
+                if (device) await connectDevice(device);
+                else { statusEl.textContent = "no compatible keyboard found"; statusEl.style.color = "#f65c5c"; }
             } catch (e) {
-                if (e.name !== "SecurityError") {
-                    statusEl.textContent = `error: ${e.message}`;
-                    statusEl.style.color = "#f65c5c";
-                }
+                if (e.name !== "SecurityError") { statusEl.textContent = `error: ${e.message}`; statusEl.style.color = "#f65c5c"; }
             }
         });
     }
@@ -720,47 +557,46 @@ export class ConfiguratorMode {
         const labelInput = document.getElementById("popupKeyLabel");
         const widthSlider = document.getElementById("popupWidthSlider");
         const widthValue = document.getElementById("popupWidthValue");
+        const heightSlider = document.getElementById("popupHeightSlider");
+        const heightValue = document.getElementById("popupHeightValue");
+        const heightField = document.getElementById("popupHeightField");
         const addBtn = document.getElementById("popupAddBtn");
         const cancelBtn = document.getElementById("popupCancelBtn");
         const scrollerLabels = document.getElementById("popupScrollerLabels");
         const mouseSideLabels = document.getElementById("popupMouseSideLabels");
+        const anchorField = document.getElementById("popupAnchorField");
+        const anchorSelect = document.getElementById("popupAnchorSelect");
 
-        let currentTargetRow = null;
-        let originalValue = "";
-        let isUpdating = false;
+        let currentTargetRow = null, originalValue = "", isUpdating = false;
 
         const updateKeyString = () => {
             if (isUpdating) return;
-
             const keyName = keySelect.value;
-            let keyString = "";
+            let keyString;
+            const widthClass = this.getWidthClass(parseInt(widthSlider.value));
 
             if (keyName === "scroller") {
-                const defaultLabel = document.getElementById("popupScrollerDefault").value || "M3";
-                const upLabel = document.getElementById("popupScrollerUp").value || "🡅";
-                const downLabel = document.getElementById("popupScrollerDown").value || "🡇";
-                const widthClass = this.getWidthClass(parseInt(widthSlider.value));
-                keyString = widthClass ?
-                    `scroller:"${defaultLabel}":"${upLabel}":"${downLabel}":${widthClass}` :
-                    `scroller:"${defaultLabel}":"${upLabel}":"${downLabel}"`;
+                const def = document.getElementById("popupScrollerDefault").value || "M3";
+                const up = document.getElementById("popupScrollerUp").value || "🡅";
+                const down = document.getElementById("popupScrollerDown").value || "🡇";
+                keyString = widthClass
+                    ? `scroller:"${def}":"${up}":"${down}":${widthClass}`
+                    : `scroller:"${def}":"${up}":"${down}"`;
             } else if (keyName === "mouse_side") {
-                const m5Label = document.getElementById("popupMouseSideM5").value || "M5";
-                const m4Label = document.getElementById("popupMouseSideM4").value || "M4";
-                const widthClass = this.getWidthClass(parseInt(widthSlider.value));
-                keyString = widthClass ?
-                    `mouse_side:"${m5Label}":"${m4Label}":${widthClass}` :
-                    `mouse_side:"${m5Label}":"${m4Label}"`;
-            } else if (keyName === "invisible") {
-                const widthClass = this.getWidthClass(parseInt(widthSlider.value));
+                const m5 = document.getElementById("popupMouseSideM5").value || "M5";
+                const m4 = document.getElementById("popupMouseSideM4").value || "M4";
+                keyString = widthClass ? `mouse_side:"${m5}":"${m4}":${widthClass}` : `mouse_side:"${m5}":"${m4}"`;
+            } else if (keyName === "mouse_pad") {
+                const hClass = this.getWidthClass(parseInt(heightSlider.value)) || "u1";
+                const anchor = anchorSelect.value;
+                keyString = `mouse_pad:${widthClass || "u1"}:${hClass}:${anchor}`;
+            } else if (keyName === "br") {
+                keyString = "br";
+            } else if (keyName === "invisible" || keyName === "dummy") {
                 keyString = widthClass ? `$none:"invis":${widthClass}` : keyName;
-            } else if (keyName === "dummy") {
-                keyString = "dummy";
             } else {
                 const label = labelInput.value || keyName.split("_")[1].toUpperCase();
-                const widthClass = this.getWidthClass(parseInt(widthSlider.value));
-                keyString = widthClass ?
-                    `${keyName}:"${label}":${widthClass}` :
-                    `${keyName}:"${label}"`;
+                keyString = widthClass ? `${keyName}:"${label}":${widthClass}` : `${keyName}:"${label}"`;
             }
 
             const targetInput = document.getElementById(`customLayout${currentTargetRow}`);
@@ -770,131 +606,109 @@ export class ConfiguratorMode {
             }
         };
 
-        widthSlider.addEventListener("input", () => {
-            const val = parseInt(widthSlider.value);
-            const units = (val / 100).toFixed(2);
-            widthValue.textContent = `${units}u`;
+        const sliderHandler = (slider, display) => () => {
+            display.textContent = `${(parseInt(slider.value) / 100).toFixed(2)}u`;
             updateKeyString();
-        });
+        };
+        widthSlider.addEventListener("input", sliderHandler(widthSlider, widthValue));
+        heightSlider.addEventListener("input", sliderHandler(heightSlider, heightValue));
 
         keySelect.addEventListener("change", () => {
-            const selectedKey = keySelect.value;
-
+            const key = keySelect.value;
             scrollerLabels.style.display = "none";
             mouseSideLabels.style.display = "none";
+            anchorField.style.display = "none";
+            heightField.style.display = "none";
             labelInput.parentElement.style.display = "block";
 
-            if (selectedKey === "scroller") {
+            if (key === "scroller") {
                 labelInput.parentElement.style.display = "none";
                 scrollerLabels.style.display = "block";
                 document.getElementById("popupScrollerDefault").value = "M3";
                 document.getElementById("popupScrollerUp").value = "🡅";
                 document.getElementById("popupScrollerDown").value = "🡇";
-            } else if (selectedKey === "mouse_side") {
+            } else if (key === "mouse_side") {
                 labelInput.parentElement.style.display = "none";
                 mouseSideLabels.style.display = "block";
                 document.getElementById("popupMouseSideM5").value = "M5";
                 document.getElementById("popupMouseSideM4").value = "M4";
-            } else if (selectedKey === "invisible" || selectedKey === "dummy") {
+            } else if (key === "mouse_pad") {
+                labelInput.parentElement.style.display = "none";
+                heightField.style.display = "block";
+                anchorField.style.display = "block";
+                widthSlider.value = 500; widthValue.textContent = "5.00u";
+                heightSlider.value = 300; heightValue.textContent = "3.00u";
+            } else if (key === "br") {
+                labelInput.parentElement.style.display = "none";
+            } else if (key === "invisible" || key === "dummy") {
                 labelInput.value = "invisible";
             } else {
-                const optionText = keySelect.options[keySelect.selectedIndex].text;
-                labelInput.value = optionText;
+                labelInput.value = keySelect.options[keySelect.selectedIndex].text;
             }
-
             updateKeyString();
         });
 
         labelInput.addEventListener("input", updateKeyString);
+        anchorSelect.addEventListener("change", updateKeyString);
+        for (const id of ["popupScrollerDefault", "popupScrollerUp", "popupScrollerDown", "popupMouseSideM5", "popupMouseSideM4"])
+            document.getElementById(id).addEventListener("input", updateKeyString);
 
-        document.getElementById("popupScrollerDefault").addEventListener("input", updateKeyString);
-        document.getElementById("popupScrollerUp").addEventListener("input", updateKeyString);
-        document.getElementById("popupScrollerDown").addEventListener("input", updateKeyString);
-        document.getElementById("popupMouseSideM5").addEventListener("input", updateKeyString);
-        document.getElementById("popupMouseSideM4").addEventListener("input", updateKeyString);
-
-        const buttonMappings = [
-            { buttonId: "addKey1", rowId: "Row1" },
-            { buttonId: "addKey2", rowId: "Row2" },
-            { buttonId: "addKey3", rowId: "Row3" },
-            { buttonId: "addKey4", rowId: "Row4" },
-            { buttonId: "addKey5", rowId: "Row5" },
-            { buttonId: "addKeyMouse", rowId: "Mouse" }
+        const rowMappings = [
+            ["addKey1", "Row1"], ["addKey2", "Row2"], ["addKey3", "Row3"],
+            ["addKey4", "Row4"], ["addKey5", "Row5"], ["addKeyMouse", "Mouse"]
         ];
 
-        buttonMappings.forEach(({ buttonId, rowId }) => {
+        for (const [buttonId, rowId] of rowMappings) {
             const btn = document.getElementById(buttonId);
-            if (btn) {
-                btn.addEventListener("click", (e) => {
-                    isUpdating = false;
-                    currentTargetRow = rowId;
+            if (!btn) continue;
+            btn.addEventListener("click", () => {
+                isUpdating = false;
+                currentTargetRow = rowId;
+                originalValue = (document.getElementById(`customLayout${rowId}`)?.value || "").trim();
 
-                    const targetInput = document.getElementById(`customLayout${rowId}`);
-                    originalValue = targetInput ? targetInput.value.trim() : "";
+                const rect = btn.getBoundingClientRect();
+                const pw = 340, ph = 400;
+                let left = rect.left - pw, top = rect.top;
+                if (left < 10) left = rect.right + 10;
+                if (left + pw > window.innerWidth - 10) left = Math.max(10, (window.innerWidth - pw) / 2);
+                if (top + ph > window.innerHeight - 10) top = Math.max(10, window.innerHeight - ph - 10);
+                if (top < 10) top = 10;
 
-                    const rect = btn.getBoundingClientRect();
-                    const popupWidth = 340;
-                    const popupHeight = 400;
+                popup.style.cssText = `display:block;left:${left}px;top:${top}px;`;
+                keySelect.value = "key_a";
+                labelInput.value = "A";
+                widthSlider.value = 100; widthValue.textContent = "1.00u";
+                heightSlider.value = 100; heightValue.textContent = "1.00u";
+                heightField.style.display = "none";
+                scrollerLabels.style.display = "none";
+                mouseSideLabels.style.display = "none";
+                anchorField.style.display = "none";
+                anchorSelect.value = "a-tl";
+                labelInput.parentElement.style.display = "block";
+                updateKeyString();
+            });
+        }
 
-                    let left = rect.left - popupWidth;
-                    let top = rect.top;
-
-                    if (left < 10) left = rect.right + 10;
-                    if (left + popupWidth > window.innerWidth - 10) left = Math.max(10, (window.innerWidth - popupWidth) / 2);
-                    if (top + popupHeight > window.innerHeight - 10) top = Math.max(10, window.innerHeight - popupHeight - 10);
-                    if (top < 10) top = 10;
-
-                    popup.style.display = "block";
-                    popup.style.left = `${left}px`;
-                    popup.style.top = `${top}px`;
-
-                    keySelect.value = "key_a";
-                    labelInput.value = "A";
-                    widthSlider.value = 100;
-                    widthValue.textContent = "1.00u";
-                    scrollerLabels.style.display = "none";
-                    mouseSideLabels.style.display = "none";
-                    labelInput.parentElement.style.display = "block";
-
-                    updateKeyString();
-                });
-            }
-        });
-
-        addBtn.addEventListener("click", () => {
-            popup.style.display = "none";
-        });
-
-        cancelBtn.addEventListener("click", () => {
+        const cancelPopup = () => {
             isUpdating = true;
-            const targetInput = document.getElementById(`customLayout${currentTargetRow}`);
-            if (targetInput) {
-                targetInput.value = originalValue;
-                targetInput.dispatchEvent(new Event("input", { bubbles: true }));
-            }
+            const inp = document.getElementById(`customLayout${currentTargetRow}`);
+            if (inp) { inp.value = originalValue; inp.dispatchEvent(new Event("input", { bubbles: true })); }
             popup.style.display = "none";
-        });
+        };
 
-        popup.addEventListener("click", (e) => {
-            if (e.target === popup) {
-                isUpdating = true;
-                const targetInput = document.getElementById(`customLayout${currentTargetRow}`);
-                if (targetInput) {
-                    targetInput.value = originalValue;
-                    targetInput.dispatchEvent(new Event("input", { bubbles: true }));
-                }
-                popup.style.display = "none";
-            }
-        });
+        addBtn.addEventListener("click", () => { popup.style.display = "none"; });
+        cancelBtn.addEventListener("click", cancelPopup);
+        popup.addEventListener("click", (e) => { if (e.target === popup) cancelPopup(); });
     }
 
     getWidthClass(value) {
         if (value === 100) return "";
         const units = value / 100;
         const intPart = Math.floor(units);
-        let decStr = Math.round((units - intPart) * 100).toString().padStart(2, "0");
-        if (decStr.endsWith("0")) decStr = decStr.slice(0, -1);
-        if (decStr === "" || decStr === "0") return `u${intPart}`;
-        return `u${intPart}-${decStr}`;
+        const decNum = Math.round((units - intPart) * 100);
+        if (!decNum) return `u${intPart}`;
+        let dec = decNum.toString().padStart(2, "0");
+        if (dec.endsWith("0") && !dec.startsWith("0")) dec = dec.slice(0, -1);
+        return `u${intPart}-${dec}`;
     }
 }

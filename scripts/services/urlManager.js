@@ -92,10 +92,18 @@ export class UrlManager {
 
         if (settings.hidemouse === true || settings.hidemouse === "true" || settings.hidemouse === "1") {
             params.push("hidemouse=1");
+        } if (settings.hidescrollcombo === true || settings.hidescrollcombo === "true" || settings.hidescrollcombo === "1") {
+            params.push("hidescrollcombo=1");
         }
 
-        if (settings.hidescrollcombo === true || settings.hidescrollcombo === "true" || settings.hidescrollcombo === "1") {
-            params.push("hidescrollcombo=1");
+        if (settings.mousetrailsensitivity && settings.mousetrailsensitivity !== "100") {
+            addParam("mousetrailsensitivity", settings.mousetrailsensitivity);
+        }
+        if (settings.mousetrailfadeout && settings.mousetrailfadeout !== "600") {
+            addParam("mousetrailfadeout", settings.mousetrailfadeout);
+        }
+        if (settings.mousetrailrecenter === false || settings.mousetrailrecenter === "false" || settings.mousetrailrecenter === "0") {
+            params.push("mousetrailrecenter=0");
         }
 
         this.addCustomLayoutParams(params, settings);
@@ -143,6 +151,9 @@ export class UrlManager {
                     boldfont: decompressedParams.get("boldfont") === "1",
                     hidemouse: decompressedParams.get("hidemouse") === "1",
                     hidescrollcombo: decompressedParams.get("hidescrollcombo") === "1",
+                    mousetrailsensitivity: decompressedParams.get("mousetrailsensitivity") || "100",
+                    mousetrailfadeout: decompressedParams.get("mousetrailfadeout") || "600",
+                    mousetrailrecenter: decompressedParams.get("mousetrailrecenter") !== "0",
                     customLayoutRow1: decompressedParams.has("customLayoutRow1") ? decompressedParams.get("customLayoutRow1") : DEFAULT_LAYOUT_STRINGS.row1,
                     customLayoutRow2: decompressedParams.has("customLayoutRow2") ? decompressedParams.get("customLayoutRow2") : DEFAULT_LAYOUT_STRINGS.row2,
                     customLayoutRow3: decompressedParams.has("customLayoutRow3") ? decompressedParams.get("customLayoutRow3") : DEFAULT_LAYOUT_STRINGS.row3,
@@ -179,6 +190,9 @@ export class UrlManager {
             boldfont: params.get("boldfont") === "1",
             hidemouse: params.get("hidemouse") === "1",
             hidescrollcombo: params.get("hidescrollcombo") === "1",
+            mousetrailsensitivity: params.get("mousetrailsensitivity") || "100",
+            mousetrailfadeout: params.get("mousetrailfadeout") || "600",
+            mousetrailrecenter: params.get("mousetrailrecenter") !== "0",
             customLayoutRow1: params.has("customLayoutRow1") ? params.get("customLayoutRow1") : DEFAULT_LAYOUT_STRINGS.row1,
             customLayoutRow2: params.has("customLayoutRow2") ? params.get("customLayoutRow2") : DEFAULT_LAYOUT_STRINGS.row2,
             customLayoutRow3: params.has("customLayoutRow3") ? params.get("customLayoutRow3") : DEFAULT_LAYOUT_STRINGS.row3,

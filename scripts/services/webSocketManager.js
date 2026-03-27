@@ -41,14 +41,13 @@ export class WebSocketManager {
         this.statusEl = statusEl;
         this.visualizer = visualizer;
         this.authToken = authToken;
-        this.elements = visualizer.previewElements;
         this.ws = null;
         this.connectionAttempts = 0;
         this.authenticated = false;
 
-        this.messageHistory = [];
         this.keyStates = {};
         this.keyDepths = {};
+        this.messageHistory = [];
         this.HISTORY_MAX_LENGTH = 100;
     }
 
@@ -58,19 +57,14 @@ export class WebSocketManager {
         this.statusEl.className = "status connecting";
 
         this.ws = new WebSocket(this.wsUrl);
-
-        this.ws.onopen = this.onOpen.bind(this);
-        this.ws.onmessage = this.onMessage.bind(this);
-        this.ws.onerror = this.onError.bind(this);
-        this.ws.onclose = this.onClose.bind(this);
+        this.ws.onopen = this._onOpen.bind(this);
+        this.ws.onmessage = this._onMessage.bind(this);
+        this.ws.onerror = this._onError.bind(this);
+        this.ws.onclose = this._onClose.bind(this);
     }
 
-    onOpen() {
-        this.ws.send(JSON.stringify({
-            type: 'auth',
-            token: this.authToken || ''
-        }));
-
+    _onOpen() {
+        this.ws.send(JSON.stringify({ type: "auth", token: this.authToken || "" }));
         this.authenticated = true;
         this.connectionAttempts = 0;
         this.statusEl.textContent = this.authToken ? "connected (authenticated)" : "connected";
@@ -78,241 +72,192 @@ export class WebSocketManager {
         this.clearStuckKeys();
     }
 
-    onMessage(e) {
-        try {
-            const data = JSON.parse(e.data);
+    _onMessage(e) {
+        let data;
+        try { data = JSON.parse(e.data); } catch { return; }
 
-            if (data.type === 'auth_response') {
-                if (data.status === 'error' || data.status === 'failed') {
-                    this.authenticated = false;
-                    const reason = data.message || "invalid token";
-                    this.statusEl.textContent = `authentication failed: ${reason}`;
-                    this.statusEl.className = "status error";
-                    this.ws.close();
-                }
-                return;
+        if (data.type === "auth_response") {
+            if (data.status === "error" || data.status === "failed") {
+                this.authenticated = false;
+                this.statusEl.textContent = `authentication failed: ${data.message || "invalid token"}`;
+                this.statusEl.className = "status error";
+                this.ws.close();
             }
-
-            if (this.authenticated) {
-                this.handleOverlayInput(e.data);
-            }
-        } catch (err) {
-            if (this.authenticated) {
-                this.handleOverlayInput(e.data);
-            }
+            return;
         }
+
+        if (this.authenticated) this._handleOverlayInput(data);
     }
 
-    onError() {
+    _onError() {
         this.statusEl.textContent = "connection failed";
         this.statusEl.className = "status error";
     }
 
-    onClose(event) {
+    _onClose(event) {
         this.authenticated = false;
         if (event.code === 1008) {
             this.statusEl.textContent = "connection closed: authentication required";
             this.statusEl.className = "status error";
             return;
         }
-
         this.statusEl.textContent = "disconnected. reconnecting...";
         this.statusEl.className = "status connecting";
         this.clearStuckKeys();
         setTimeout(() => this.connect(), 2000);
     }
 
-    getMappedKeyId(event) {
-        if (event.event_type.startsWith("key_") || event.event_type === "analog_depth") {
-            if (event.rawcode !== undefined) {
-                return {
-                    id: `k_${event.rawcode}`,
-                    name: RAW_CODE_TO_KEY_NAME[event.rawcode],
-                    type: "key"
-                };
-            }
-        } else if (event.event_type.startsWith("mouse_") && event.button) {
-            return {
-                id: `m_${event.button}`,
-                name: MOUSE_BUTTON_MAP[event.button],
-                type: "mouse"
-            };
+    _getMappedKeyInfo(event) {
+        if (event.rawcode !== undefined && (event.event_type.startsWith("key_") || event.event_type === "analog_depth")) {
+            const name = RAW_CODE_TO_KEY_NAME[event.rawcode];
+            return name ? { id: `k_${event.rawcode}`, name, type: "key" } : null;
+        }
+        if (event.button && event.event_type.startsWith("mouse_")) {
+            const name = MOUSE_BUTTON_MAP[event.button];
+            return name ? { id: `m_${event.button}`, name, type: "mouse" } : null;
         }
         return null;
     }
 
-    recalculateKeyStates() {
-        const tempStates = {};
-        const isKeyActive = {};
-        this.elements = this.visualizer.previewElements;
+    _recalculateKeyStates() {
+        const viz = this.visualizer;
+        const els = viz.previewElements;
+        if (!els) return;
 
+        const desiredActive = {};
         for (const event of this.messageHistory) {
-            const keyInfo = this.getMappedKeyId(event);
-            if (!keyInfo || !keyInfo.name || !this.elements) continue;
-
-            const elementMap = keyInfo.type === "key" ? this.elements.keyElements : this.elements.mouseElements;
-            const elements = elementMap.get(keyInfo.name);
-            if (!elements || elements.length === 0) continue;
-
-            if (event.event_type.endsWith("_pressed")) {
-                isKeyActive[keyInfo.id] = true;
-            } else if (event.event_type.endsWith("_released")) {
-                isKeyActive[keyInfo.id] = false;
-            }
+            const info = this._getMappedKeyInfo(event);
+            if (!info) continue;
+            const map = info.type === "key" ? els.keyElements : els.mouseElements;
+            if (!map.has(info.name)) continue;
+            desiredActive[info.id] = event.event_type.endsWith("_pressed");
         }
 
-        const keysToCheck = new Set([...Object.keys(isKeyActive), ...Object.keys(this.keyStates)]);
+        const allIds = new Set([...Object.keys(desiredActive), ...Object.keys(this.keyStates)]);
+        for (const id of allIds) {
+            const desired = !!desiredActive[id];
+            const current = !!this.keyStates[id];
+            if (desired === current) continue;
 
-        for (const keyId of keysToCheck) {
-            const isActive = isKeyActive[keyId] !== undefined ? isKeyActive[keyId] : (this.keyStates[keyId] === true);
-            const wasActive = this.keyStates[keyId] === true;
+            const isKey = id.startsWith("k_");
+            const rawId = parseInt(id.substring(2));
+            const name = isKey ? RAW_CODE_TO_KEY_NAME[rawId] : MOUSE_BUTTON_MAP[rawId];
+            if (!name) continue;
 
-            if (isActive !== wasActive && this.elements) {
-                const type = keyId.startsWith("k_") ? "key" : "mouse";
-                const idValue = parseInt(keyId.substring(2));
-                const keyName = type === "key" ? RAW_CODE_TO_KEY_NAME[idValue] : MOUSE_BUTTON_MAP[idValue];
+            const elements = isKey ? els.keyElements.get(name) : els.mouseElements.get(name);
+            const activeSet = isKey ? viz.activeKeys : viz.activeMouseButtons;
+            if (!elements?.length) continue;
 
-                const elements = type === "key" ? this.elements.keyElements.get(keyName) : this.elements.mouseElements.get(keyName);
-                const activeSet = type === "key" ? this.visualizer.activeKeys : this.visualizer.activeMouseButtons;
-
-                if (elements && elements.length > 0) {
-                    elements.forEach(el => {
-                        this.visualizer.updateElementState(el, keyName, isActive, activeSet);
-
-                        if (type === "mouse") {
-                            if (isActive) {
-                                const animDur = this.visualizer.animDuration || '0.15s';
-                                el.style.setProperty('transition', `all ${animDur} cubic-bezier(0.4,0,0.2,1)`, 'important');
-                                const maxScale = this.visualizer.pressScaleValue || 1.05;
-                                el.style.setProperty('transform', `scale(${maxScale})`, 'important');
-                            } else {
-                                const animDur = this.visualizer.animDuration || '0.15s';
-                                el.style.setProperty('transition', `all ${animDur} cubic-bezier(0.4,0,0.2,1)`, 'important');
-                                el.style.setProperty('transform', 'scale(1)', 'important');
-                            }
-                        }
-                    });
+            for (const el of elements) {
+                viz.updateElementState(el, name, desired, activeSet);
+                if (!isKey) {
+                    const animDur = viz.animDuration || "0.15s";
+                    const t = `all ${animDur} cubic-bezier(0.4,0,0.2,1)`;
+                    el.style.setProperty("transition", t, "important");
+                    el.style.setProperty("transform", desired ? `scale(${viz.pressScaleValue || 1.05})` : "scale(1)", "important");
                 }
             }
-            tempStates[keyId] = isActive;
         }
 
-        this.keyStates = Object.fromEntries(
-            Object.entries(tempStates).filter(([keyId, isActive]) => isActive || Object.hasOwn(isKeyActive, keyId))
-        );
+        this.keyStates = {};
+        for (const [id, active] of Object.entries(desiredActive)) {
+            if (active) this.keyStates[id] = true;
+        }
     }
 
-    handleOverlayInput(data) {
-        try {
-            const event = JSON.parse(data);
-            if (event.event_type === "mouse_moved" || event.event_type === "mouse_dragged") return;
-            
-            if (event.event_type === "analog_depth") {
-                if (!this.visualizer.forceDisableAnalog) {
-                    this.handleAnalogDepth(event);
-                }
-                return;
-            }
+    _handleOverlayInput(event) {
+        const { event_type } = event;
 
-            if (event.event_type === "mouse_wheel") {
-                const dir = event.rotation ?? 1;
-                if (this.visualizer.previewElements.scrollDisplay) {
-                    this.visualizer.handleScroll(dir);
-                }
-                return;
-            }
+        if (event_type === "mouse_moved" || event_type === "mouse_dragged") {
+            if (this.visualizer.mousePadCanvas)
+                this.visualizer.handleMouseMove(event.dx ?? 0, event.dy ?? 0);
+            return;
+        }
 
+        if (event_type === "analog_depth") {
+            if (!this.visualizer.forceDisableAnalog) this._handleAnalogDepth(event);
+            return;
+        }
+
+        if (event_type === "mouse_wheel") {
+            if (this.visualizer.previewElements?.scrollDisplay)
+                this.visualizer.handleScroll(event.rotation ?? 1);
+            return;
+        }
+
+        if (event_type === "key_pressed" || event_type === "key_released" ||
+            event_type === "mouse_pressed" || event_type === "mouse_released") {
             this.messageHistory.push(event);
-            if (this.messageHistory.length > this.HISTORY_MAX_LENGTH) {
-                this.messageHistory.shift();
-            }
-
-            if (["key_released", "mouse_released", "key_pressed", "mouse_pressed"].includes(event.event_type)) {
-                this.recalculateKeyStates();
-            }
-
-        } catch (err) { }
-    }
-
-    lerpColor(hexA, hexB, t) {
-        const parse = (hex) => {
-            if (!hex) return [128, 128, 128];
-            const h = hex.replace('#', '');
-            const full = h.length === 3
-                ? h.split('').map(c => parseInt(c + c, 16))
-                : [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
-            return full;
-        };
-        const a = parse(hexA);
-        const b = parse(hexB);
-        const r = Math.round(a[0] + (b[0] - a[0]) * t);
-        const g = Math.round(a[1] + (b[1] - a[1]) * t);
-        const bl = Math.round(a[2] + (b[2] - a[2]) * t);
-        return `rgb(${r},${g},${bl})`;
-    }
-
-    handleAnalogDepth(event) {
-        if (!this.visualizer.previewElements) return;
-
-        if (!this.visualizer.analogMode) {
-            this.visualizer.analogMode = true;
+            if (this.messageHistory.length > this.HISTORY_MAX_LENGTH) this.messageHistory.shift();
+            this._recalculateKeyStates();
         }
+    }
 
-        const keyInfo = this.getMappedKeyId(event);
-        if (!keyInfo || !keyInfo.name || !keyInfo.name.startsWith('key_')) return;
+    _handleAnalogDepth(event) {
+        if (!this.visualizer.previewElements) return;
+        if (!this.visualizer.analogMode) this.visualizer.analogMode = true;
 
-        const depth = event.depth || 0;
-        const keyId = keyInfo.id;
+        const info = this._getMappedKeyInfo(event);
+        if (!info?.name?.startsWith("key_")) return;
 
-        this.keyDepths[keyId] = depth;
-        this.visualizer.setAnalogDepthTarget(keyInfo.name, depth);
+        this.keyDepths[info.id] = event.depth || 0;
+        this.visualizer.setAnalogDepthTarget(info.name, event.depth || 0);
     }
 
     clearStuckKeys() {
-        if (!this.visualizer.previewElements) return;
+        const viz = this.visualizer;
+        if (!viz.previewElements) return;
 
-        const clearElements = (map) => {
+        const clearMap = (map) => {
             map.forEach(elements => {
-                elements.forEach(el => {
-                    el.classList.remove("active");
-                    el.classList.remove("analog-key");
-                    this.visualizer.activeElements.delete(el);
+                for (const el of elements) {
+                    el.classList.remove("active", "analog-key");
+                    viz.activeElements.delete(el);
                     el.style.transform = "";
-                    const primaryLabel = el.querySelector('.key-label-primary');
-                    if (primaryLabel) {
-                        primaryLabel.style.removeProperty('color');
-                    }
-                    const invertedLabel = el.querySelector('.key-label-inverted');
-                    if (invertedLabel) {
-                        invertedLabel.style.clipPath = 'inset(100% 0 0 0)';
-                    }
-                });
+                    el.querySelector(".key-label-primary")?.style.removeProperty("color");
+                    const inv = el.querySelector(".key-label-inverted");
+                    if (inv) inv.style.clipPath = "inset(100% 0 0 0)";
+                }
             });
         };
 
-        clearElements(this.visualizer.previewElements.keyElements);
-        clearElements(this.visualizer.previewElements.mouseElements);
+        clearMap(viz.previewElements.keyElements);
+        clearMap(viz.previewElements.mouseElements);
 
-        this.visualizer.activeKeys.clear();
-        this.visualizer.activeMouseButtons.clear();
+        viz.activeKeys.clear();
+        viz.activeMouseButtons.clear();
 
-        if (this.visualizer.previewElements.scrollDisplays?.length > 0) {
-            this.visualizer.previewElements.scrollDisplays.forEach((display, index) => {
+        const { scrollDisplays, scrollArrows, scrollCounts } = viz.previewElements;
+        if (scrollDisplays?.length) {
+            scrollDisplays.forEach((display, i) => {
                 display.classList.remove("active");
-                this.visualizer.activeElements.delete(display);
-                this.visualizer.previewElements.scrollArrows[index].textContent = display.dataset.defaultLabel || "-";
-                this.visualizer.previewElements.scrollCounts[index].textContent = "";
+                viz.activeElements.delete(display);
+                scrollArrows[i].textContent = display.dataset.defaultLabel || "-";
+                scrollCounts[i].textContent = "";
             });
         }
-        this.visualizer.currentScrollCount = 0;
+
+        viz.currentScrollCount = 0;
         this.messageHistory = [];
         this.keyStates = {};
         this.keyDepths = {};
-        if (this.visualizer.analogRafId) {
-            cancelAnimationFrame(this.visualizer.analogRafId);
-            this.visualizer.analogRafId = null;
+
+        if (viz.analogRafId) {
+            cancelAnimationFrame(viz.analogRafId);
+            viz.analogRafId = null;
         }
-        this.visualizer.analogTargetDepths = {};
-        this.visualizer.analogCurrentDepths = {};
+        viz.analogTargetDepths = {};
+        viz.analogCurrentDepths = {};
+
+        viz.mousePadTrail = [];
+        viz.mousePadCursorX = null;
+        viz.mousePadCursorY = null;
+        if (viz.mousePadRafId) {
+            cancelAnimationFrame(viz.mousePadRafId);
+            viz.mousePadRafId = null;
+        }
+        if (viz.mousePadCtx && viz.mousePadCanvas) {
+            viz.mousePadCtx.clearRect(0, 0, viz.mousePadCanvas.width, viz.mousePadCanvas.height);
+        }
     }
 }
