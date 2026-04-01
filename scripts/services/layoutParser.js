@@ -118,12 +118,9 @@ export class LayoutParser {
             const hasKey = row.some(item =>
                 item.type === "key" && !(item.keys || [item.key]).every(k => k.startsWith("gp_") || k.startsWith("none"))
             );
-            if (hasKey){
-                console.log("has key using ws");
-                return true;
-            }
+            if (hasKey) return true;
+            const hasMousePad = row.some(item => item.type === "mouse_pad");
+            if (hasMousePad) return true;
         }
-        console.log("no key not using ws");
-        return false;
     }
 }

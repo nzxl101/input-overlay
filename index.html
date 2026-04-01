@@ -63,6 +63,7 @@
                 <div class="cfg-field">
                     <label class="cfg-label" for="wsauth">auth token</label>
                     <input class="cfg-input config-input" id="wsauth" type="text"
+                        style="-webkit-text-security: disc; text-security: disc;"
                         placeholder="paste your auth token here">
                 </div>
                 <div class="cfg-field" style="margin-top:10px;">
@@ -401,7 +402,7 @@
             <div class="cfg-unified">
                 <div class="cfg-row1">
                     <div class="cfg-section">
-                        <div class="cfg-section-title">colors<div class="cs-hr"></div>
+                        <div class="cfg-section-title">colors &amp; options<div class="cs-hr"></div>
                         </div>
                         <div class="cfg-field">
                             <label class="cfg-label" for="activecolorhex">glow color</label>
@@ -467,6 +468,92 @@
                                         class="cfg-input cfg-input--color config-input color-hex-input" type="text"
                                         maxlength="9" value="#808080">
                                 </div>
+                            </div>
+                        </div>
+                        <div class="cfg-field">
+                            <label class="cfg-label" for="fontfamily">font family</label>
+                            <select class="cfg-select config-input" id="fontfamily">
+                                <option value="ArialPixel">ArialPixel</option>
+                                <option value="Borevs">Borevs</option>
+                                <option value="bitcount-prop-single">Bitcount Prop Single</option>
+                                <option value="bungee">Bungee</option>
+                                <option value="comfortaa">Comfortaa</option>
+                                <option value="fredoka">Fredoka</option>
+                                <option value="lexend">Lexend</option>
+                                <option value="lexend-giga">Lexend Giga</option>
+                                <option value="lilita-one">Lilita One</option>
+                                <option value="press-start-2p">Press Start 2P</option>
+                                <option value="smooch-sans">Smooch Sans</option>
+                                <option value="sora">Sora</option>
+                                <option value="special-elite">Special Elite</option>
+                                <option value="abel">Abel</option>
+                                <option value="archivo-black">Archivo Black</option>
+                                <option value="arimo">Arimo</option>
+                                <option value="bebas-neue">Bebas Neue</option>
+                                <option value="caveat-brush">Caveat Brush</option>
+                                <option value="chewy">Chewy</option>
+                                <option value="cinzel">Cinzel</option>
+                                <option value="fjalla-one">Fjalla One</option>
+                                <option value="inter">Inter</option>
+                                <option value="josefin-sans">Josefin Sans</option>
+                                <option value="knewave">Knewave</option>
+                                <option value="lato">Lato</option>
+                                <option value="montserrat">Montserrat</option>
+                                <option value="noto-sans">Noto Sans</option>
+                                <option value="open-sans">Open Sans</option>
+                                <option value="orbitron">Orbitron</option>
+                                <option value="oswald">Oswald</option>
+                                <option value="pacifico">Pacifico</option>
+                                <option value="raleway">Raleway</option>
+                                <option value="roboto-condensed">Roboto Condensed</option>
+                                <option value="roboto-mono">Roboto Mono</option>
+                                <option value="roboto">Roboto</option>
+                                <option value="share-tech">Share Tech</option>
+                                <option value="titan-one">Titan One</option>
+                                <option value="ubuntu">Ubuntu</option>
+                            </select>
+                        </div>
+                        <div class="cfg-checkboxes">
+                            <div style="display: flex; gap: 10px">
+                                <label class="cfg-checkbox">
+                                    <input type="checkbox" checked class="config-input" id="boldfont">
+                                    <span class="cfg-checkbox-box"></span>
+                                    <span class="cfg-checkbox-label">bold font</span>
+                                </label>
+                                <label class="cfg-checkbox">
+                                    <input type="checkbox" class="config-input" id="hidemouse">
+                                    <span class="cfg-checkbox-box"></span>
+                                    <span class="cfg-checkbox-label">hide mouse buttons</span>
+                                </label>
+                                <label class="cfg-checkbox">
+                                    <input type="checkbox" class="config-input" id="hidescrollcombo">
+                                    <span class="cfg-checkbox-box"></span>
+                                    <span class="cfg-checkbox-label">hide scroll combo</span>
+                                </label>
+                            </div>
+                            <div class="cs-hr"></div>
+                            <div class="cfg-slider-pair" style="padding-top: 7px;">
+                                <div class="cfg-field">
+                                    <label class="cfg-label">analog live preview device</label>
+                                    <button class="cfg-btn" id="analogconnectbtn"
+                                        style="width:100%;height:41%;text-align: center;">connect analog</button>
+                                    <div id="analogstatus" class="cfg-analog-status">‎</div>
+                                </div>
+                                <div class="cfg-field">
+                                    <label class="cfg-label" for="keylegendmode">analog legend fill mode</label>
+                                    <select class="cfg-select config-input" id="keylegendmode">
+                                        <option value="fading">fading</option>
+                                        <option value="inverting">inverting</option>
+                                        <option value="digital">digital</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="cfg-checkboxes" style="margin-top:8px;">
+                                <label class="cfg-checkbox">
+                                    <input type="checkbox" class="config-input" id="forcedisableanalog">
+                                    <span class="cfg-checkbox-box"></span>
+                                    <span class="cfg-checkbox-label">force disable analog</span>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -562,193 +649,146 @@
                                         max="3000" step="50" value="600">
                                 </div>
                             </div>
-                            <div class="cfg-checkboxes" style="margin-top:8px;">
-                                <label class="cfg-checkbox">
-                                    <input type="checkbox" checked class="config-input" id="mousetrailrecenter">
-                                    <span class="cfg-checkbox-box"></span>
-                                    <span class="cfg-checkbox-label">recenter after fadeout</span>
-                                </label>
+                            <div class="cfg-section" style="margin-top:8px;">
+                                <div class="cfg-slider-field">
+                                    <div class="cfg-slider-header">
+                                        <label class="cfg-label" for="mousetraillength">trail length</label>
+                                        <span class="cfg-slider-val" id="mousetraillengthvalue">150pts</span>
+                                    </div>
+                                    <input id="mousetraillength" class="cfg-range config-input" type="range" min="10"
+                                        max="1000" step="10" value="150">
+                                </div>
+                                <div class="cfg-slider-pair">
+                                    <div class="cfg-field" id="mousepadtexture-field" style="margin-top:8px;">
+                                        <label class="cfg-label" for="mousetrailmode">mode</label>
+                                        <select id="mousetrailmode" class="cfg-select config-input">
+                                            <option value="wrap">wrap</option>
+                                            <option value="pan">pan</option>
+                                        </select>
+                                    </div>
+                                    <div class="cfg-field" id="mousepadtexture-field" style="margin-top:8px;">
+                                        <label class="cfg-label" for="mousepadtexture">background texture url</label>
+                                        <input class="cfg-input config-input" id="mousepadtexture" type="text"
+                                            placeholder="https://... direct image link">
+                                    </div>
+                                </div>
+                                <div class="cfg-checkboxes" style="margin-top:8px;">
+                                    <label class="cfg-checkbox">
+                                        <input type="checkbox" class="config-input" id="mousetrailm1highlight">
+                                        <span class="cfg-checkbox-box"></span>
+                                        <span class="cfg-checkbox-label">highlight m1 press in trail</span>
+                                    </label>
+                                </div>
+                                <div class="cfg-checkboxes" style="margin-top:8px;">
+                                    <label class="cfg-checkbox">
+                                        <input type="checkbox" class="config-input" id="showmousedistance">
+                                        <span class="cfg-checkbox-box"></span>
+                                        <span class="cfg-checkbox-label">show distance tracker</span>
+                                    </label>
+                                </div>
+                                <div class="cfg-slider-field" style="margin-top:8px;">
+                                    <div class="cfg-slider-header">
+                                        <label class="cfg-label" for="mousedistancedpi">mouse DPI (distance tracker)</label>
+                                        <span class="cfg-slider-val" id="mousedistancedpivalue" style="opacity:0.4">400 DPI</span>
+                                    </div>
+                                    <input id="mousedistancedpi" class="cfg-range config-input" type="range" min="100"
+                                        max="3200" step="50" value="400" disabled>
+                                </div>
                             </div>
+
                         </div>
                     </div>
                     <div class="cfg-section">
-                        <div class="cfg-section-title">font &amp; options
+                        <div class="cfg-section-title">custom layout
                             <div class="cs-hr"></div>
                         </div>
-                        <div class="cfg-field">
-                            <label class="cfg-label" for="fontfamily">font family</label>
-                            <select class="cfg-select config-input" id="fontfamily">
-                                <option value="ArialPixel">ArialPixel</option>
-                                <option value="Borevs">Borevs</option>
-                                <option value="bitcount-prop-single">Bitcount Prop Single</option>
-                                <option value="bungee">Bungee</option>
-                                <option value="comfortaa">Comfortaa</option>
-                                <option value="fredoka">Fredoka</option>
-                                <option value="lexend">Lexend</option>
-                                <option value="lexend-giga">Lexend Giga</option>
-                                <option value="lilita-one">Lilita One</option>
-                                <option value="press-start-2p">Press Start 2P</option>
-                                <option value="smooch-sans">Smooch Sans</option>
-                                <option value="sora">Sora</option>
-                                <option value="special-elite">Special Elite</option>
-                                <option value="abel">Abel</option>
-                                <option value="archivo-black">Archivo Black</option>
-                                <option value="arimo">Arimo</option>
-                                <option value="bebas-neue">Bebas Neue</option>
-                                <option value="caveat-brush">Caveat Brush</option>
-                                <option value="chewy">Chewy</option>
-                                <option value="cinzel">Cinzel</option>
-                                <option value="fjalla-one">Fjalla One</option>
-                                <option value="inter">Inter</option>
-                                <option value="josefin-sans">Josefin Sans</option>
-                                <option value="knewave">Knewave</option>
-                                <option value="lato">Lato</option>
-                                <option value="montserrat">Montserrat</option>
-                                <option value="noto-sans">Noto Sans</option>
-                                <option value="open-sans">Open Sans</option>
-                                <option value="orbitron">Orbitron</option>
-                                <option value="oswald">Oswald</option>
-                                <option value="pacifico">Pacifico</option>
-                                <option value="raleway">Raleway</option>
-                                <option value="roboto-condensed">Roboto Condensed</option>
-                                <option value="roboto-mono">Roboto Mono</option>
-                                <option value="roboto">Roboto</option>
-                                <option value="share-tech">Share Tech</option>
-                                <option value="titan-one">Titan One</option>
-                                <option value="ubuntu">Ubuntu</option>
+                        <div class="cfg-section-title cfg-layout-title-row">
+
+                            <label class="cfg-label" for="layoutPresets">preset</label>
+                            <select class="cfg-select" id="layoutPresets">
+                                <option value="0" selected>choose</option>
+                                <option
+                                    value="https://overlay.girlglock.com?cfg=eNplUMtu2zAQ_Jc98GQDpiTbxQI6qHmgBWwgdQz0GFAkpRChRZWk4voDin5G0T_sJ5QPN3US7UHD2Z2ZJRn36llyo42tl7xbrQVRA7sgPyxikZbxp96aaRCZpiyWoCTPtn2mq3UrVpSYyWs1nB2qLhbpzOAz0aWP9Noc66Iilgk1uZqS0UrnHGda1pQuiBulFHW5WJCejQcjVKdkCA7ns30aTaIwV7xip-E_H4M7dlD6VDdWMX2nvktNWqNF7ITcg5mc9JYp7eTgVLiP8qcQRAmfnDeHDTsF75050vpJnh5iwigR1PCsHMwiRRFoRgVCkVGJUGZUIVTw1qtIXp61CPvmI-BE58s0_Q3hS9YdEb5mFNJuMrIIu3deZfLSsvPuUXUe4f7T59t98CyShiE0We1CKyOBcJ1Rh3D7znH54si91QhX-93mYsfYYDoENZv9Be1GxsOq93fN1U2gy3lZvjLexoeu03MnC4QtjVvOq_XMcWu0luF-2xIQ_vz6_SP_fsIsK6zqH6Ok-CfJ9MgETsuYVq2QzVv9F3Tk-eQ">
+                                    qwerty + mouse</option>
+                                <option
+                                    value="https://overlay.girlglock.com/?cfg=eNptkF1vwiAUhv8LF1xpUvqhhoQL43aniXFLdmko0Eqk0PCh678flJltZj0XLc-hz3mBMi9vghllLGlYt1pzKDX9BTdFKthSdu2tCZpnjGiqtoF5b9tnXK9bvkLQBK-k_jbUXSrYGe0z6OYH9srcSVlDS7kMjhRwtMI5x6gSBKECulEITqqigD0dB8NlJ0UcHNdXMSnRC80jFUTqm7Be6v4xdlbMsvh_-YcG_cNToI4OUk1kayVVR_kpFGyN4qlDELxILgYTXIwD57e3VContJPxzNJPMQyCLDhvhj2d4pyTuSPCwzBMz7gks-GsROcxOCCwiIc43zH4AIvcsbK_pFb5ACPlONTLssGhWlYI06VXz9qKJA3FYJuFDoO3_MUxeAHP2-v_wzWzJUVj3ioMdu-nPcABLZt1to6UiWg-bnevmW_-KA7zJc3qL4p11R4">
+                                    wasd + duck + jump + mouse</option>
+                                <option
+                                    value="https://overlay.girlglock.com?cfg=eNptUEFuwyAQ_AsHTq5kO3ZSIXGw0vSUSGkSqccIA3ZQsHHBNPUDqj6j6g_7hBpI1bQNe2A87M7MmtBePHOqpNI4p9V0xqBoyQV5G7uCJaHHWivbskAnxFWZw9Bb1oHOZiWbJlDZXor2rJBVrmCl2j4QlT-wluqE0wxqwoQ1OIad5sYYSiTHSRJD03HO8CSOYU26RjFRCT4aj99ned_qh8a-9Bdr2x_eGVekEXLAhRZErsULl7BUkrkXnMCDYLxR1oy2kFrTq2ZJhlFto04JZrZphr90io982D8h8AAih04IPAbEEVgEpBHYgMjr7iWvegRWCUD2n8XEaxEEijBnENgGxBC4C6hC4B5EhmolJR-FVxOAwOf7x2u43q7pZtej597OBaK9lgjMd5ulG79J8-j7hcgxbbHcXfKmI3Rcbrsu5gvPT7PzclrUB7dd-i_Fyv9UH-MLaGbaTw">
+                                    qwerty minimal</option>
+                                <option
+                                    value="https://overlay.girlglock.com?cfg=eNptjU1uwyAQRu8yC1ZZmMRJKiQWkbJspKpddBlhftxRsHHAJPUBqh6j6g17hBoTqW0aRgLm8fhGyB5PWjrrPF9Ks1orgq34Be-KVKQS8lB7F1uVMRWpqiXJblVnXK4rtaLExd5ie0koTSpiXNtnYKZFauvOfF4SLxTGwAvSeR1CkMJqTmlBQqe14ouiILXoGqfQoB4Hj_0lflKnT6M3_0Nj-8PTYCMatAPfeBT2AV-1JZWzKr1wSmQMvWvuxTAmPLoz5So2zXCN5_ygh_2RwREYticMWFk9S-zM4Bmu9cWkCwYbmKTA4CnfFIPtP728PXR5A-9cDJo3ad9bbXoGOwqzIL2zVvuxWwCDr4_Pt3y8A4t0lnWP9Us_Gd9TW7gZ">
+                                    wasd + mouse buttons</option>
+                                <option
+                                    value="https://overlay.girlglock.com/?cfg=eNplkst2mzAQht9lFnRTWsC3ZHpYOK5zaRzXtZ2ml_TkyCBsNYBsQHHcVR-gD9RF3ymv0IEhCUnQ5tMw-jX_jERQqBsZ6FhnfieIur3QUqloBPecclkLEVwvM23SkMOuKNeiY3HuYsnhdm8Rdl1LmyJWaa3QjsplRTotOBBVn7WM9db32lYmQmVy37HWmczzPBCx9F3XsfK1lKHfchxrKdaJDlWkJF1M-1q-Sq0OUZ73JGrSx3h5cSQSFe_8fqZEPFG3MrYWOg7LP75rrVQoE21yutYKTF7oZCR2pDbVW9e_lrurUnMtEYazAbwuAy6Cy-QheEwthBZTG6HN1EHoMHURukw9hB7THsIe0z7CPpOD4DAlKjU5gs07uTEipq3P23Ic-VoEVNRBf3A6m_QHQ0Dj2d3nDrzKQSEWCPP-AeCWzFYSG4RPLLZFuKhvIY9MGcKUqaCDTDuEr0wG4ZxJIZwwaYSPTGuECVMso-JqkVGxkmS-19JquWpEfzQcxSJfIVxeVlZeDKNVWaFR5LEOrhEG_ckMUN4WmbAfbAmEPitSt2ZMIcJ7pgjhkGmJcMRENx4z_UT4wETqp7UFhFGtJxNVPuAU4R1HNkYX1LJXdfPSQlLbhuP5cEp9tj271zHPPbT9-77kKxWR_dnxyeGc0zum0vmF8I0VbxG-MAXklukG4XPdMZo9E1U0rh8Nwll9QicJ9eLu35-7v7_ruchMaerFm9oPd_ttYypPazItu_1iCJ0HA0GRUXMG8-mo8arKH1tFBV2cjJ-FRUzS_dG8Ea6fcP18t3bPPNZyn340bRxIZEpv72w4Pm8Eq_RmNca1e95_rwOh4w">
+                                    full qwerty</option>
+                                <option
+                                    value="https://overlay.girlglock.com/?cfg=eNptj9FOwjAYhe99jP-iV1uyji3DxpoAQjTBRIHES9Ot3WjoKLYbhAcwPobxDX0ER6sG0F1sZ1__c_5TVjRyKwqttKGC837eQ3LNjmDGszgVKGfFqjK6XXOPI_ckGfKzefWNyziLYqTbRsn1aUKp183JnkrpHY2QYVy2liYR2hhhrS2YEhTjFNmNEJzGaYQqtqk1l6UUhuIoclElq6Xa06E2YmtRrhU_UIpR0dpG11O270rM9A5T3tb1_hzHdCX2zw3LCSwGQyAtDrPggF4IPIJTOwJPXgkCY68MgRmcZ_VclhJlY5eybAjMb-8miy4zDrFzMQID77fdoVecwI1XJYHJn8zk_9rp76qiMYrAaDGbuvJp8HPAVNdgMF0cYbthRXeH-cNgNO5wL0zik-B73VpB68PbRRAInbsX2MJopUR37bBD8Pn-8eo_b24Ax4F3GVktj2wXh62YwJWfunQtEgLX_r8ffAGQ-dZl">
+                                    deadlock by @susuFPS
+                                </option>
+                                <option
+                                    value="https://overlay.girlglock.com/?cfg=eNqtkktOwzAQhu_ihVdUikvaIkte0HWRUMUCVsiJnTDg2JEfbbPjcRAkTsgRsBMQtEQCJDKRYv8z838eK7z0sJGlUcayWVnNFwKD5l_EkywFLnh5V1sTtBhkwlMIgofaoh7kfFGIOcEmeAX63SGvUuDKaD8IVf_gWpktm-bYcgHBsTzDrZXOuZIryQjJsGulFOw4y3DN28YIqEBGcty_-_elfVOsm-6pQX_qiVzxBlTHTi1wdQ47qXBhlEgZRvANCNmY4CIW919vOSgntYM4HPguQgkug_OmWfEuctZmS1jdXitP0eoC0UAms_lREoooLNGRNlpSBHoDLmV_3MdWG1vXsTUto-36w_YQPGUjzaGl6PX55eHv5BEzTtEVOsQe9_PKyvegezQ6AtQ3Q_4R_Qa0o-hy1GhJ0fLbCfKxwYXZ6p749F-jn34Dz9g_ON-aznko72i6RkfDNL18UtjDpP2SVHtHOev_URGapnsD7M5Q5w">
+                                    WIP gamepad (ws not required, will work with browser source only)
+                                </option>
                             </select>
+
                         </div>
-                        <div class="cfg-checkboxes">
-                            <div style="display: flex; gap: 10px">
-                                <label class="cfg-checkbox">
-                                    <input type="checkbox" checked class="config-input" id="boldfont">
-                                    <span class="cfg-checkbox-box"></span>
-                                    <span class="cfg-checkbox-label">bold font</span>
-                                </label>
-                                <label class="cfg-checkbox">
-                                    <input type="checkbox" class="config-input" id="hidemouse">
-                                    <span class="cfg-checkbox-box"></span>
-                                    <span class="cfg-checkbox-label">hide mouse buttons</span>
-                                </label>
-                                <label class="cfg-checkbox">
-                                    <input type="checkbox" class="config-input" id="hidescrollcombo">
-                                    <span class="cfg-checkbox-box"></span>
-                                    <span class="cfg-checkbox-label">hide scroll combo</span>
-                                </label>
-                            </div>
-                            <div class="cfg-section-title" style="margin-top: 20px;">analog<div class="cs-hr"></div>
-                            </div>
-                            <div class="cfg-slider-pair">
-                                <div class="cfg-field">
-                                    <label class="cfg-label">live preview device</label>
-                                    <button class="cfg-btn" id="analogconnectbtn"
-                                        style="width:100%;height:41%;text-align: center;">connect analog</button>
-                                    <div id="analogstatus" class="cfg-analog-status">‎</div>
-                                </div>
-                                <div class="cfg-field">
-                                    <label class="cfg-label" for="keylegendmode">legend fill mode</label>
-                                    <select class="cfg-select config-input" id="keylegendmode">
-                                        <option value="fading">fading</option>
-                                        <option value="inverting">inverting</option>
-                                        <option value="digital">digital</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="cfg-checkboxes" style="margin-top:8px;">
-                                <label class="cfg-checkbox">
-                                    <input type="checkbox" class="config-input" id="forcedisableanalog">
-                                    <span class="cfg-checkbox-box"></span>
-                                    <span class="cfg-checkbox-label">force disable analog</span>
-                                </label>
+
+
+                        <div class="cfg-layout-row-field">
+                            <label class="cfg-label" for="customLayoutRow1">top row</label>
+                            <div class="cfg-row-input">
+                                <textarea class="cfg-textarea config-input" id="customLayoutRow1" rows="2"
+                                    spellcheck="false"></textarea>
+                                <button class="cfg-addbtn" id="addKey1" title="Add key">+</button>
                             </div>
                         </div>
+                        <div class="cfg-layout-row-field">
+                            <label class="cfg-label" for="customLayoutRow2">qwerty row</label>
+                            <div class="cfg-row-input">
+                                <textarea class="cfg-textarea config-input" id="customLayoutRow2" rows="2"
+                                    spellcheck="false"></textarea>
+                                <button class="cfg-addbtn" id="addKey2" title="Add key">+</button>
+                            </div>
+                        </div>
+                        <div class="cfg-layout-row-field">
+                            <label class="cfg-label" for="customLayoutRow3">asdf row</label>
+                            <div class="cfg-row-input">
+                                <textarea class="cfg-textarea config-input" id="customLayoutRow3" rows="2"
+                                    spellcheck="false"></textarea>
+                                <button class="cfg-addbtn" id="addKey3" title="Add key">+</button>
+                            </div>
+                        </div>
+                        <div class="cfg-layout-row-field">
+                            <label class="cfg-label" for="customLayoutRow4">zxcv row</label>
+                            <div class="cfg-row-input">
+                                <textarea class="cfg-textarea config-input" id="customLayoutRow4" rows="2"
+                                    spellcheck="false"></textarea>
+                                <button class="cfg-addbtn" id="addKey4" title="Add key">+</button>
+                            </div>
+                        </div>
+                        <div class="cfg-layout-row-field">
+                            <label class="cfg-label" for="customLayoutRow5">space row</label>
+                            <div class="cfg-row-input">
+                                <textarea class="cfg-textarea config-input" id="customLayoutRow5" rows="2"
+                                    spellcheck="false"></textarea>
+                                <button class="cfg-addbtn" id="addKey5" title="Add key">+</button>
+                            </div>
+                        </div>
+                        <div class="cfg-layout-row-field">
+                            <label class="cfg-label" for="customLayoutMouse">mouse row</label>
+                            <div class="cfg-row-input">
+                                <textarea class="cfg-textarea config-input" id="customLayoutMouse" rows="2"
+                                    spellcheck="false"></textarea>
+                                <button class="cfg-addbtn" id="addKeyMouse" title="Add key">+</button>
+                            </div>
+                        </div>
+
                     </div>
+
                 </div>
                 <div class="cfg-row2">
-                    <div class="cfg-section cfg-section--full">
-                        <div class="cfg-section-title cfg-layout-title-row">
-                            <div class="cfg-field cfg-layout-presets-inline">
-                                <label class="cfg-label" for="layoutPresets">preset</label>
-                                <select class="cfg-select" id="layoutPresets">
-                                    <option value="0" selected>choose</option>
-                                    <option
-                                        value="https://overlay.girlglock.com?cfg=eNplUMtu2zAQ_Jc98GQDpiTbxQI6qHmgBWwgdQz0GFAkpRChRZWk4voDin5G0T_sJ5QPN3US7UHD2Z2ZJRn36llyo42tl7xbrQVRA7sgPyxikZbxp96aaRCZpiyWoCTPtn2mq3UrVpSYyWs1nB2qLhbpzOAz0aWP9Noc66Iilgk1uZqS0UrnHGda1pQuiBulFHW5WJCejQcjVKdkCA7ns30aTaIwV7xip-E_H4M7dlD6VDdWMX2nvktNWqNF7ITcg5mc9JYp7eTgVLiP8qcQRAmfnDeHDTsF75050vpJnh5iwigR1PCsHMwiRRFoRgVCkVGJUGZUIVTw1qtIXp61CPvmI-BE58s0_Q3hS9YdEb5mFNJuMrIIu3deZfLSsvPuUXUe4f7T59t98CyShiE0We1CKyOBcJ1Rh3D7znH54si91QhX-93mYsfYYDoENZv9Be1GxsOq93fN1U2gy3lZvjLexoeu03MnC4QtjVvOq_XMcWu0luF-2xIQ_vz6_SP_fsIsK6zqH6Ok-CfJ9MgETsuYVq2QzVv9F3Tk-eQ">
-                                        qwerty + mouse</option>
-                                    <option
-                                        value="https://overlay.girlglock.com/?cfg=eNptkF1vwiAUhv8LF1xpUvqhhoQL43aniXFLdmko0Eqk0PCh678flJltZj0XLc-hz3mBMi9vghllLGlYt1pzKDX9BTdFKthSdu2tCZpnjGiqtoF5b9tnXK9bvkLQBK-k_jbUXSrYGe0z6OYH9srcSVlDS7kMjhRwtMI5x6gSBKECulEITqqigD0dB8NlJ0UcHNdXMSnRC80jFUTqm7Be6v4xdlbMsvh_-YcG_cNToI4OUk1kayVVR_kpFGyN4qlDELxILgYTXIwD57e3VContJPxzNJPMQyCLDhvhj2d4pyTuSPCwzBMz7gks-GsROcxOCCwiIc43zH4AIvcsbK_pFb5ACPlONTLssGhWlYI06VXz9qKJA3FYJuFDoO3_MUxeAHP2-v_wzWzJUVj3ioMdu-nPcABLZt1to6UiWg-bnevmW_-KA7zJc3qL4p11R4">
-                                        wasd + duck + jump + mouse</option>
-                                    <option
-                                        value="https://overlay.girlglock.com?cfg=eNptUEFuwyAQ_AsHTq5kO3ZSIXGw0vSUSGkSqccIA3ZQsHHBNPUDqj6j6g_7hBpI1bQNe2A87M7MmtBePHOqpNI4p9V0xqBoyQV5G7uCJaHHWivbskAnxFWZw9Bb1oHOZiWbJlDZXor2rJBVrmCl2j4QlT-wluqE0wxqwoQ1OIad5sYYSiTHSRJD03HO8CSOYU26RjFRCT4aj99ned_qh8a-9Bdr2x_eGVekEXLAhRZErsULl7BUkrkXnMCDYLxR1oy2kFrTq2ZJhlFto04JZrZphr90io982D8h8AAih04IPAbEEVgEpBHYgMjr7iWvegRWCUD2n8XEaxEEijBnENgGxBC4C6hC4B5EhmolJR-FVxOAwOf7x2u43q7pZtej597OBaK9lgjMd5ulG79J8-j7hcgxbbHcXfKmI3Rcbrsu5gvPT7PzclrUB7dd-i_Fyv9UH-MLaGbaTw">
-                                        qwerty minimal</option>
-                                    <option
-                                        value="https://overlay.girlglock.com?cfg=eNptjU1uwyAQRu8yC1ZZmMRJKiQWkbJspKpddBlhftxRsHHAJPUBqh6j6g17hBoTqW0aRgLm8fhGyB5PWjrrPF9Ks1orgq34Be-KVKQS8lB7F1uVMRWpqiXJblVnXK4rtaLExd5ie0koTSpiXNtnYKZFauvOfF4SLxTGwAvSeR1CkMJqTmlBQqe14ouiILXoGqfQoB4Hj_0lflKnT6M3_0Nj-8PTYCMatAPfeBT2AV-1JZWzKr1wSmQMvWvuxTAmPLoz5So2zXCN5_ygh_2RwREYticMWFk9S-zM4Bmu9cWkCwYbmKTA4CnfFIPtP728PXR5A-9cDJo3ad9bbXoGOwqzIL2zVvuxWwCDr4_Pt3y8A4t0lnWP9Us_Gd9TW7gZ">
-                                        wasd + mouse buttons</option>
-                                    <option
-                                        value="https://overlay.girlglock.com/?cfg=eNplkst2mzAQht9lFnRTWsC3ZHpYOK5zaRzXtZ2ml_TkyCBsNYBsQHHcVR-gD9RF3ymv0IEhCUnQ5tMw-jX_jERQqBsZ6FhnfieIur3QUqloBPecclkLEVwvM23SkMOuKNeiY3HuYsnhdm8Rdl1LmyJWaa3QjsplRTotOBBVn7WM9db32lYmQmVy37HWmczzPBCx9F3XsfK1lKHfchxrKdaJDlWkJF1M-1q-Sq0OUZ73JGrSx3h5cSQSFe_8fqZEPFG3MrYWOg7LP75rrVQoE21yutYKTF7oZCR2pDbVW9e_lrurUnMtEYazAbwuAy6Cy-QheEwthBZTG6HN1EHoMHURukw9hB7THsIe0z7CPpOD4DAlKjU5gs07uTEipq3P23Ic-VoEVNRBf3A6m_QHQ0Dj2d3nDrzKQSEWCPP-AeCWzFYSG4RPLLZFuKhvIY9MGcKUqaCDTDuEr0wG4ZxJIZwwaYSPTGuECVMso-JqkVGxkmS-19JquWpEfzQcxSJfIVxeVlZeDKNVWaFR5LEOrhEG_ckMUN4WmbAfbAmEPitSt2ZMIcJ7pgjhkGmJcMRENx4z_UT4wETqp7UFhFGtJxNVPuAU4R1HNkYX1LJXdfPSQlLbhuP5cEp9tj271zHPPbT9-77kKxWR_dnxyeGc0zum0vmF8I0VbxG-MAXklukG4XPdMZo9E1U0rh8Nwll9QicJ9eLu35-7v7_ruchMaerFm9oPd_ttYypPazItu_1iCJ0HA0GRUXMG8-mo8arKH1tFBV2cjJ-FRUzS_dG8Ea6fcP18t3bPPNZyn340bRxIZEpv72w4Pm8Eq_RmNca1e95_rwOh4w">
-                                        full qwerty</option>
-                                    <option
-                                        value="https://overlay.girlglock.com/?cfg=eNptj9FOwjAYhe99jP-iV1uyji3DxpoAQjTBRIHES9Ot3WjoKLYbhAcwPobxDX0ER6sG0F1sZ1__c_5TVjRyKwqttKGC837eQ3LNjmDGszgVKGfFqjK6XXOPI_ckGfKzefWNyziLYqTbRsn1aUKp183JnkrpHY2QYVy2liYR2hhhrS2YEhTjFNmNEJzGaYQqtqk1l6UUhuIoclElq6Xa06E2YmtRrhU_UIpR0dpG11O270rM9A5T3tb1_hzHdCX2zw3LCSwGQyAtDrPggF4IPIJTOwJPXgkCY68MgRmcZ_VclhJlY5eybAjMb-8miy4zDrFzMQID77fdoVecwI1XJYHJn8zk_9rp76qiMYrAaDGbuvJp8HPAVNdgMF0cYbthRXeH-cNgNO5wL0zik-B73VpB68PbRRAInbsX2MJopUR37bBD8Pn-8eo_b24Ax4F3GVktj2wXh62YwJWfunQtEgLX_r8ffAGQ-dZl">
-                                        deadlock by @susuFPS
-                                    </option>
-                                    <option
-                                        value="https://overlay.girlglock.com/?cfg=eNqtkktOwzAQhu_ihVdUikvaIkte0HWRUMUCVsiJnTDg2JEfbbPjcRAkTsgRsBMQtEQCJDKRYv8z838eK7z0sJGlUcayWVnNFwKD5l_EkywFLnh5V1sTtBhkwlMIgofaoh7kfFGIOcEmeAX63SGvUuDKaD8IVf_gWpktm-bYcgHBsTzDrZXOuZIryQjJsGulFOw4y3DN28YIqEBGcty_-_elfVOsm-6pQX_qiVzxBlTHTi1wdQ47qXBhlEgZRvANCNmY4CIW919vOSgntYM4HPguQgkug_OmWfEuctZmS1jdXitP0eoC0UAms_lREoooLNGRNlpSBHoDLmV_3MdWG1vXsTUto-36w_YQPGUjzaGl6PX55eHv5BEzTtEVOsQe9_PKyvegezQ6AtQ3Q_4R_Qa0o-hy1GhJ0fLbCfKxwYXZ6p749F-jn34Dz9g_ON-aznko72i6RkfDNL18UtjDpP2SVHtHOev_URGapnsD7M5Q5w">
-                                        WIP gamepad (ws not required, will work with browser source only)
-                                    </option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="cs-hr"></div>
-                        <div class="cfg-layout-rows">
-                            <div class="cfg-layout-row-field">
-                                <label class="cfg-label" for="customLayoutRow1">top row</label>
-                                <div class="cfg-row-input">
-                                    <textarea class="cfg-textarea config-input" id="customLayoutRow1" rows="2"
-                                        spellcheck="false"></textarea>
-                                    <button class="cfg-addbtn" id="addKey1" title="Add key">+</button>
-                                </div>
-                            </div>
-                            <div class="cfg-layout-row-field">
-                                <label class="cfg-label" for="customLayoutRow2">qwerty row</label>
-                                <div class="cfg-row-input">
-                                    <textarea class="cfg-textarea config-input" id="customLayoutRow2" rows="2"
-                                        spellcheck="false"></textarea>
-                                    <button class="cfg-addbtn" id="addKey2" title="Add key">+</button>
-                                </div>
-                            </div>
-                            <div class="cfg-layout-row-field">
-                                <label class="cfg-label" for="customLayoutRow3">asdf row</label>
-                                <div class="cfg-row-input">
-                                    <textarea class="cfg-textarea config-input" id="customLayoutRow3" rows="2"
-                                        spellcheck="false"></textarea>
-                                    <button class="cfg-addbtn" id="addKey3" title="Add key">+</button>
-                                </div>
-                            </div>
-                            <div class="cfg-layout-row-field">
-                                <label class="cfg-label" for="customLayoutRow4">zxcv row</label>
-                                <div class="cfg-row-input">
-                                    <textarea class="cfg-textarea config-input" id="customLayoutRow4" rows="2"
-                                        spellcheck="false"></textarea>
-                                    <button class="cfg-addbtn" id="addKey4" title="Add key">+</button>
-                                </div>
-                            </div>
-                            <div class="cfg-layout-row-field">
-                                <label class="cfg-label" for="customLayoutRow5">space row</label>
-                                <div class="cfg-row-input">
-                                    <textarea class="cfg-textarea config-input" id="customLayoutRow5" rows="2"
-                                        spellcheck="false"></textarea>
-                                    <button class="cfg-addbtn" id="addKey5" title="Add key">+</button>
-                                </div>
-                            </div>
-                            <div class="cfg-layout-row-field">
-                                <label class="cfg-label" for="customLayoutMouse">mouse row</label>
-                                <div class="cfg-row-input">
-                                    <textarea class="cfg-textarea config-input" id="customLayoutMouse" rows="2"
-                                        spellcheck="false"></textarea>
-                                    <button class="cfg-addbtn" id="addKeyMouse" title="Add key">+</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
 
             </div>

@@ -187,6 +187,14 @@ export class WebSocketManager {
 
         if (event_type === "key_pressed" || event_type === "key_released" ||
             event_type === "mouse_pressed" || event_type === "mouse_released") {
+            //TODO: add conditions for mouse_pad and trail highlight being there
+            if (event_type === "mouse_pressed" || event_type === "mouse_released") {
+                const info = this._getMappedKeyInfo(event);
+                if (info?.type === "mouse") {
+                    if (event_type === "mouse_pressed") this.visualizer.activeMouseButtons.add(info.name);
+                    else this.visualizer.activeMouseButtons.delete(info.name);
+                }
+            }
             this.messageHistory.push(event);
             if (this.messageHistory.length > this.HISTORY_MAX_LENGTH) this.messageHistory.shift();
             this._recalculateKeyStates();
@@ -254,6 +262,10 @@ export class WebSocketManager {
         viz.mousePadTrail = [];
         viz.mousePadCursorX = null;
         viz.mousePadCursorY = null;
+        viz.MOUSEPAD_PAN_X = 0;
+        viz.MOUSEPAD_PAN_Y = 0;
+        viz._mousePadTotalDistancePx = 0;
+        viz._mousePadLastFrameTime = 0;
         if (viz.mousePadRafId) {
             cancelAnimationFrame(viz.mousePadRafId);
             viz.mousePadRafId = null;

@@ -99,11 +99,26 @@ export class UrlManager {
         if (settings.mousetrailsensitivity && settings.mousetrailsensitivity !== "100") {
             addParam("mousetrailsensitivity", settings.mousetrailsensitivity);
         }
-        if (settings.mousetrailfadeout && settings.mousetrailfadeout !== "600") {
+        if (settings.mousetrailfadeout != null && settings.mousetrailfadeout !== "600") {
             addParam("mousetrailfadeout", settings.mousetrailfadeout);
         }
-        if (settings.mousetrailrecenter === false || settings.mousetrailrecenter === "false" || settings.mousetrailrecenter === "0") {
-            params.push("mousetrailrecenter=0");
+        if (settings.mousetrailmode && settings.mousetrailmode !== "wrap") {
+            addParam("mousetrailmode", settings.mousetrailmode);
+        }
+        if (settings.mousetraillength && settings.mousetraillength !== "150") {
+            addParam("mousetraillength", settings.mousetraillength);
+        }
+        if (settings.mousetrailm1highlight === true || settings.mousetrailm1highlight === "true" || settings.mousetrailm1highlight === "1") {
+            params.push("mousetrailm1highlight=1");
+        }
+        if (settings.mousepadtexture && settings.mousepadtexture.trim() !== "") {
+            addParam("mousepadtexture", encodeURIComponent(settings.mousepadtexture.trim()));
+        }
+        if (settings.showmousedistance === true || settings.showmousedistance === "true" || settings.showmousedistance === "1") {
+            params.push("showmousedistance=1");
+        }
+        if (settings.mousedistancedpi && settings.mousedistancedpi !== "400") {
+            addParam("mousedistancedpi", settings.mousedistancedpi);
         }
 
         this.addCustomLayoutParams(params, settings);
@@ -152,8 +167,13 @@ export class UrlManager {
                     hidemouse: decompressedParams.get("hidemouse") === "1",
                     hidescrollcombo: decompressedParams.get("hidescrollcombo") === "1",
                     mousetrailsensitivity: decompressedParams.get("mousetrailsensitivity") || "100",
-                    mousetrailfadeout: decompressedParams.get("mousetrailfadeout") || "600",
-                    mousetrailrecenter: decompressedParams.get("mousetrailrecenter") !== "0",
+                    mousetrailfadeout: decompressedParams.get("mousetrailfadeout") ?? "600",
+                    mousetrailmode: decompressedParams.get("mousetrailmode") || "wrap",
+                    mousetraillength: decompressedParams.get("mousetraillength") || "150",
+                    mousetrailm1highlight: decompressedParams.get("mousetrailm1highlight") === "1",
+                    mousepadtexture: decompressedParams.get("mousepadtexture") ? decodeURIComponent(decompressedParams.get("mousepadtexture")) : "",
+                    showmousedistance: decompressedParams.get("showmousedistance") === "1",
+                    mousedistancedpi: decompressedParams.get("mousedistancedpi") || "400",
                     customLayoutRow1: decompressedParams.has("customLayoutRow1") ? decompressedParams.get("customLayoutRow1") : DEFAULT_LAYOUT_STRINGS.row1,
                     customLayoutRow2: decompressedParams.has("customLayoutRow2") ? decompressedParams.get("customLayoutRow2") : DEFAULT_LAYOUT_STRINGS.row2,
                     customLayoutRow3: decompressedParams.has("customLayoutRow3") ? decompressedParams.get("customLayoutRow3") : DEFAULT_LAYOUT_STRINGS.row3,
@@ -191,8 +211,13 @@ export class UrlManager {
             hidemouse: params.get("hidemouse") === "1",
             hidescrollcombo: params.get("hidescrollcombo") === "1",
             mousetrailsensitivity: params.get("mousetrailsensitivity") || "100",
-            mousetrailfadeout: params.get("mousetrailfadeout") || "600",
-            mousetrailrecenter: params.get("mousetrailrecenter") !== "0",
+            mousetrailfadeout: params.get("mousetrailfadeout") ?? "600",
+            mousetrailmode: params.get("mousetrailmode") || "wrap",
+            mousetraillength: params.get("mousetraillength") || "150",
+            mousetrailm1highlight: params.get("mousetrailm1highlight") === "1",
+            mousepadtexture: params.get("mousepadtexture") ? decodeURIComponent(params.get("mousepadtexture")) : "",
+            showmousedistance: params.get("showmousedistance") === "1",
+            mousedistancedpi: params.get("mousedistancedpi") || "400",
             customLayoutRow1: params.has("customLayoutRow1") ? params.get("customLayoutRow1") : DEFAULT_LAYOUT_STRINGS.row1,
             customLayoutRow2: params.has("customLayoutRow2") ? params.get("customLayoutRow2") : DEFAULT_LAYOUT_STRINGS.row2,
             customLayoutRow3: params.has("customLayoutRow3") ? params.get("customLayoutRow3") : DEFAULT_LAYOUT_STRINGS.row3,

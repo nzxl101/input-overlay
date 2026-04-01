@@ -67,7 +67,10 @@ export class ConfiguratorMode {
             keylegendmode: "fading", forcedisableanalog: false,
             mousetrailsensitivity: "100",
             mousetrailfadeout: "600",
-            mousetrailrecenter: true,
+            mousetrailmode: "wrap",
+            mousetraillength: "150",
+            mousetrailm1highlight: false,
+            mousepadtexture: "",
         });
     }
 
@@ -116,8 +119,11 @@ export class ConfiguratorMode {
             keylegendmode: val("keylegendmode") || "inverting",
             forcedisableanalog: chk("forcedisableanalog"),
             mousetrailsensitivity: val("mousetrailsensitivity") || "100",
-            mousetrailfadeout: val("mousetrailfadeout") || "600",
-            mousetrailrecenter: chk("mousetrailrecenter"),
+            mousetrailfadeout: val("mousetrailfadeout") !== "" ? val("mousetrailfadeout") : "600",
+            mousetrailmode: val("mousetrailmode") || "wrap",
+            mousetraillength: val("mousetraillength") || "150",
+            mousetrailm1highlight: chk("mousetrailm1highlight"),
+            mousepadtexture: val("mousepadtexture"),
         };
     }
 
@@ -134,6 +140,9 @@ export class ConfiguratorMode {
         }
         if (id === "mousetrailfadeout") {
             label.textContent = input.value + "ms"; return;
+        }
+        if (id === "mousetraillength") {
+            label.textContent = input.value + "pts"; return;
         }
 
         let suffix = "", val = input.value;
@@ -198,7 +207,10 @@ export class ConfiguratorMode {
         applyValue("forcedisableanalog", settings.forcedisableanalog);
         applyValue("mousetrailsensitivity", settings.mousetrailsensitivity ?? "100");
         applyValue("mousetrailfadeout", settings.mousetrailfadeout ?? "600");
-        applyValue("mousetrailrecenter", settings.mousetrailrecenter ?? true);
+        applyValue("mousetrailmode", settings.mousetrailmode ?? "wrap");
+        applyValue("mousetraillength", settings.mousetraillength ?? "500");
+        applyValue("mousetrailm1highlight", settings.mousetrailm1highlight ?? false);
+        applyValue("mousepadtexture", settings.mousepadtexture ?? "");
     }
 
     updateState(settings = null) {
@@ -345,6 +357,11 @@ export class ConfiguratorMode {
             });
         }
 
+        const wsauthEl = document.getElementById("wsauth");
+        const savedAuth = localStorage.getItem("overlay_wsauth");
+        if (savedAuth && !wsauthEl.value) wsauthEl.value = savedAuth;
+        wsauthEl.addEventListener("input", () => localStorage.setItem("overlay_wsauth", wsauthEl.value));
+
         document.getElementById("copybtn").addEventListener("click", this.copyLink.bind(this));
         document.getElementById("loadbtn").addEventListener("click", this.loadSettingsFromLink.bind(this));
 
@@ -396,9 +413,12 @@ export class ConfiguratorMode {
         } else if (type === "mouse_pressed" || type === "mouse_released") {
             const btnName = BROWSER_BUTTON_TO_KEY_NAME[event.button];
             if (!btnName) return;
+            //track this always regardless of m1 key being in custom layout row or not for now TODO: add conditions for mouse_pad and trail highlight being there
+            const isPress = type === "mouse_pressed";
+            if (isPress) this.visualizer.activeMouseButtons.add(btnName);
+            else this.visualizer.activeMouseButtons.delete(btnName);
             const elements = els.mouseElements.get(btnName);
             if (elements?.length) {
-                const isPress = type === "mouse_pressed";
                 for (const el of elements) this.visualizer.updateElementState(el, btnName, isPress, this.visualizer.activeMouseButtons);
             }
         } else if (type === "mouse_wheel") {

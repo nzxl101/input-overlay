@@ -28,8 +28,21 @@ export class OverlayVisualiser {
         this.MOUSEPAD_TRAIL_MS = 600;
         this.MOUSEPAD_TRAIL_PX = 2.5;
         this.MOUSEPAD_SENSITIVITY = 1.0;
-        this.MOUSEPAD_RECENTER = true;
+        this.MOUSEPAD_MODE = "wrap";
+        this.MOUSEPAD_TRAIL_LENGTH = 500;
+        this.MOUSEPAD_M1_HIGHLIGHT = false;
+        this.MOUSEPAD_BG_TEXTURE = "";
+        this.MOUSEPAD_SHOW_DISTANCE = false;
+        this.MOUSEPAD_DPI = 400;
+        this._mousePadTotalDistancePx = 0;
+        this.MOUSEPAD_PAN_X = 0;
+        this.MOUSEPAD_PAN_Y = 0;
         this._mousePadRafLoop = this._mousePadRafLoop.bind(this);
+        this._mousePadLastFrameTime = 0;
+        this._mousePadTextureImg = null;
+        this._mousePadTextureUrl = null;
+        this._mousePadTexturePattern = null;
+        this._mousePadTextureTintCanvas = null;
 
         this._activeColorRGB = null;
 
@@ -92,6 +105,7 @@ export class OverlayVisualiser {
         const activeColorRgb = this.utils.hexToRgba(opts.activecolor, 1);
         const activeColorForGradient = activeColorRgb.replace(/, [\d.]+?\)/, ", 0.3)");
         const fontWeight = opts.boldfont ? 999 : 1;
+        this.fontWeight = fontWeight;
         const gapModifier = (opts.gapmodifier / 100).toFixed(2);
 
         this.pressScaleValue = pressscalevalue;
@@ -108,14 +122,38 @@ export class OverlayVisualiser {
         this.keyLegendMode = opts.keylegendmode || "fading";
         this.forceDisableAnalog = opts.forcedisableanalog === true || opts.forcedisableanalog === "true" || opts.forcedisableanalog === "1";
 
-        this.MOUSEPAD_TRAIL_MS = parseInt(opts.mousetrailfadeout) || 600;
+        this.MOUSEPAD_TRAIL_MS = opts.mousetrailfadeout != null ? parseInt(opts.mousetrailfadeout) : 600;
         this.MOUSEPAD_SENSITIVITY = (parseInt(opts.mousetrailsensitivity) || 100) / 100;
-        this.MOUSEPAD_RECENTER = opts.mousetrailrecenter !== false && opts.mousetrailrecenter !== "false" && opts.mousetrailrecenter !== "0";
+        this.MOUSEPAD_MODE = opts.mousetrailmode || "wrap";
+        this.MOUSEPAD_TRAIL_LENGTH = parseInt(opts.mousetraillength) || 150;
+        this.MOUSEPAD_M1_HIGHLIGHT = opts.mousetrailm1highlight === true || opts.mousetrailm1highlight === "true" || opts.mousetrailm1highlight === "1";
+        this.MOUSEPAD_SHOW_DISTANCE = opts.showmousedistance === true || opts.showmousedistance === "true" || opts.showmousedistance === "1";
+        this.MOUSEPAD_DPI = parseInt(opts.mousedistancedpi) || 400;
+
+        const newTextureUrl = opts.mousepadtexture || "";
+        if (newTextureUrl !== this.MOUSEPAD_BG_TEXTURE) {
+            this.MOUSEPAD_BG_TEXTURE = newTextureUrl;
+            this._mousePadTextureImg = null;
+            this._mousePadTexturePattern = null;
+            this._mousePadTextureTintCanvas = null;
+            if (newTextureUrl) {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.onload = () => {
+                    this._mousePadTextureImg = img;
+                    this._mousePadTexturePattern = null;
+                    this._mousePadTextureTintCanvas = null;
+                };
+                img.onerror = () => { this._mousePadTextureImg = null; };
+                img.src = newTextureUrl;
+            }
+        }
 
         const hex = opts.activecolor.replace("#", "");
         this._activeColorRGB = [parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16)];
 
         this.utils.applyFontStyles(opts.fontfamily);
+        this._fontFamilyKey = opts.fontfamily || "";
 
         let styleEl = document.getElementById("dynamic-styles");
         if (!styleEl) {
@@ -228,7 +266,6 @@ export class OverlayVisualiser {
                 text-shadow: ${textShadow} !important;
             }
             .mouse-section { display: ${opts.hidemouse ? "none" : "flex"} !important; }
-            .mouse-section { display: flex !important; }
         `;
     }
 
@@ -711,7 +748,7 @@ export class OverlayVisualiser {
         const logicalW = parseFloat(wrap.style.width) || wrap.offsetWidth;
         const logicalH = parseFloat(wrap.style.height) || wrap.offsetHeight;
         if (!logicalW || !logicalH) return;
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = (window.devicePixelRatio || 1) * 2;
         this.mousePadCanvas.width = Math.round(logicalW * dpr);
         this.mousePadCanvas.height = Math.round(logicalH * dpr);
         this.mousePadCanvas.style.width = `${logicalW}px`;
@@ -733,22 +770,62 @@ export class OverlayVisualiser {
         if (this.mousePadCursorX === null) {
             this.mousePadCursorX = W / 2;
             this.mousePadCursorY = H / 2;
+            return;
         }
 
         const REF_W = 300, REF_H = 200;
         const scaleX = W / REF_W;
         const scaleY = H / REF_H;
         const BASE_SENSITIVITY = 0.05 * this.MOUSEPAD_SENSITIVITY;
-        const prevX = this.mousePadCursorX, prevY = this.mousePadCursorY;
+        const now = performance.now();
+        const m1Active = this.MOUSEPAD_M1_HIGHLIGHT && this.activeMouseButtons.has("mouse_left");
+        const HARD_CAP = 5000;
 
-        this.mousePadCursorX = ((this.mousePadCursorX + dx * BASE_SENSITIVITY * scaleX) % W + W) % W;
-        this.mousePadCursorY = ((this.mousePadCursorY + dy * BASE_SENSITIVITY * scaleY) % H + H) % H;
+        if (this.MOUSEPAD_MODE === "pan") {
+            if (this.MOUSEPAD_PAN_X === undefined) { this.MOUSEPAD_PAN_X = 0; this.MOUSEPAD_PAN_Y = 0; }
+            const movX = dx * BASE_SENSITIVITY * scaleX;
+            const movY = dy * BASE_SENSITIVITY * scaleY;
+            this.MOUSEPAD_PAN_X -= movX;
+            this.MOUSEPAD_PAN_Y -= movY;
+            const segLen = Math.sqrt(movX * movX + movY * movY);
+            if (this.MOUSEPAD_SHOW_DISTANCE) this._mousePadTotalDistancePx += Math.sqrt(dx * dx + dy * dy);
+            const prevDist = this.mousePadTrail.length > 0 ? (this.mousePadTrail[this.mousePadTrail.length - 1].d || 0) : 0;
+            this.mousePadTrail.push({ dx: movX, dy: movY, t: now, m1: m1Active, d: prevDist + segLen });
+            const maxDist = this.MOUSEPAD_TRAIL_LENGTH || 500;
+            while (this.mousePadTrail.length > 1) {
+                const tipDist = this.mousePadTrail[this.mousePadTrail.length - 1].d;
+                if (tipDist - this.mousePadTrail[0].d > maxDist) this.mousePadTrail.shift();
+                else break;
+            }
+            if (this.mousePadTrail.length > HARD_CAP) this.mousePadTrail.shift();
+        } else {
+            const prevX = this.mousePadCursorX, prevY = this.mousePadCursorY;
+            this.mousePadCursorX = ((this.mousePadCursorX + dx * BASE_SENSITIVITY * scaleX) % W + W) % W;
+            this.mousePadCursorY = ((this.mousePadCursorY + dy * BASE_SENSITIVITY * scaleY) % H + H) % H;
 
-        if (Math.abs(this.mousePadCursorX - prevX) > W / 2 || Math.abs(this.mousePadCursorY - prevY) > H / 2)
-            this.mousePadTrail.push(null);
+            const wrapped = Math.abs(this.mousePadCursorX - prevX) > W / 2 || Math.abs(this.mousePadCursorY - prevY) > H / 2;
+            if (wrapped) this.mousePadTrail.push(null);
+            if (this.MOUSEPAD_SHOW_DISTANCE) this._mousePadTotalDistancePx += Math.sqrt(dx * dx + dy * dy);
 
-        this.mousePadTrail.push({ x: this.mousePadCursorX, y: this.mousePadCursorY, t: performance.now() });
-        if (this.mousePadTrail.length > 500) this.mousePadTrail.shift();
+            const segLen = wrapped ? 0 : Math.sqrt(
+                (this.mousePadCursorX - prevX) ** 2 + (this.mousePadCursorY - prevY) ** 2
+            );
+            let prevDist = 0;
+            for (let i = this.mousePadTrail.length - 1; i >= 0; i--) {
+                if (this.mousePadTrail[i] !== null) { prevDist = this.mousePadTrail[i].d || 0; break; }
+            }
+            this.mousePadTrail.push({ x: this.mousePadCursorX, y: this.mousePadCursorY, t: now, m1: m1Active, d: prevDist + segLen });
+            const maxDist = this.MOUSEPAD_TRAIL_LENGTH || 500;
+            const tip = this.mousePadTrail[this.mousePadTrail.length - 1];
+            const tipD = tip ? tip.d : 0;
+            while (this.mousePadTrail.length > 1) {
+                const first = this.mousePadTrail[0];
+                const firstD = first === null ? (this.mousePadTrail[1]?.d ?? tipD) : first.d;
+                if (tipD - firstD > maxDist) this.mousePadTrail.shift();
+                else break;
+            }
+            if (this.mousePadTrail.length > HARD_CAP) this.mousePadTrail.shift();
+        }
 
         if (!this.mousePadRafId) this.mousePadRafId = requestAnimationFrame(this._mousePadRafLoop);
     }
@@ -757,61 +834,248 @@ export class OverlayVisualiser {
         this.mousePadRafId = null;
         if (!this.mousePadCtx || !this.mousePadCanvas) return;
 
+        const now = performance.now();
+        const elapsed = now - (this._mousePadLastFrameTime || 0);
+        if (elapsed < 16.67) {
+            this.mousePadRafId = requestAnimationFrame(this._mousePadRafLoop);
+            return;
+        }
+        this._mousePadLastFrameTime = now;
+
         const ctx = this.mousePadCtx;
         const W = parseFloat(this.mousePadCanvas.dataset.logicalW) || this.mousePadCanvas.width;
         const H = parseFloat(this.mousePadCanvas.dataset.logicalH) || this.mousePadCanvas.height;
-        const now = performance.now();
         const maxAge = this.MOUSEPAD_TRAIL_MS;
-
-        while (this.mousePadTrail.length > 1) {
-            const first = this.mousePadTrail[0];
-            if (first !== null && (now - first.t) > maxAge) this.mousePadTrail.shift();
-            else break;
-        }
 
         ctx.clearRect(0, 0, W, H);
 
-        const trail = this.mousePadTrail;
-        const trailPx = this.MOUSEPAD_TRAIL_PX;
-        let segStart = null;
+        if (this._mousePadTextureImg || this.MOUSEPAD_MODE === "pan") {
+            const [r, g, b] = this._activeColorRGB || [139, 92, 246];
+            const tintColor = `rgba(${r},${g},${b},0.13)`;
 
-        for (let i = 0; i < trail.length; i++) {
-            const p = trail[i];
-            if (p === null) { segStart = null; continue; }
-            if (segStart === null) { segStart = p; continue; }
+            if (this._mousePadTextureImg) {
+                const needRebuild = !this._mousePadTextureTintCanvas ||
+                    this._mousePadTextureTintCanvas._tintColor !== tintColor ||
+                    this._mousePadTextureTintCanvas._srcImg !== this._mousePadTextureImg;
 
-            const p0 = segStart, p1 = p;
-            segStart = p;
-            const age = now - (p0.t + p1.t) / 2;
-            const alpha = Math.max(0, 1 - age / maxAge);
-            if (alpha <= 0) continue;
+                if (needRebuild) {
+                    const src = this._mousePadTextureImg;
+                    const SZ = 12;
+                    const tileSize = SZ * 2;
+                    const tc = document.createElement("canvas");
+                    tc.width = tileSize;
+                    tc.height = tileSize;
+                    const tc2d = tc.getContext("2d");
+                    tc2d.drawImage(src, 0, 0, tileSize, tileSize);
+                    tc2d.globalCompositeOperation = "multiply";
+                    tc2d.fillStyle = tintColor;
+                    tc2d.fillRect(0, 0, tileSize, tileSize);
+                    tc2d.globalCompositeOperation = "destination-in";
+                    tc2d.drawImage(src, 0, 0, tileSize, tileSize);
+                    tc._tintColor = tintColor;
+                    tc._srcImg = this._mousePadTextureImg;
+                    this._mousePadTextureTintCanvas = tc;
+                    this._mousePadTexturePattern = null;
+                }
 
-            ctx.beginPath();
-            ctx.moveTo(p0.x, p0.y);
-            ctx.lineTo(p1.x, p1.y);
-            ctx.strokeStyle = this._mousePadColor(alpha);
-            ctx.lineWidth = trailPx * (0.4 + 0.6 * alpha);
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
-            ctx.stroke();
+                if (!this._mousePadTexturePattern) {
+                    this._mousePadTexturePattern = ctx.createPattern(this._mousePadTextureTintCanvas, "repeat");
+                }
+
+                if (this._mousePadTexturePattern) {
+                    const panX = this.MOUSEPAD_MODE === "pan" ? (this.MOUSEPAD_PAN_X || 0) : 0;
+                    const panY = this.MOUSEPAD_MODE === "pan" ? (this.MOUSEPAD_PAN_Y || 0) : 0;
+                    const mat = new DOMMatrix().translate(-panX, -panY);
+                    this._mousePadTexturePattern.setTransform(mat);
+                    ctx.fillStyle = this._mousePadTexturePattern;
+                    ctx.fillRect(0, 0, W, H);
+                }
+            } else if (this.MOUSEPAD_MODE === "pan") {
+                const SZ = 12;
+                const panX = ((this.MOUSEPAD_PAN_X || 0) % (SZ * 2) + SZ * 2) % (SZ * 2);
+                const panY = ((this.MOUSEPAD_PAN_Y || 0) % (SZ * 2) + SZ * 2) % (SZ * 2);
+                for (let row = -1; row < Math.ceil(H / SZ) + 1; row++) {
+                    for (let col = -1; col < Math.ceil(W / SZ) + 1; col++) {
+                        if ((row + col) % 2 === 0) continue;
+                        ctx.fillStyle = tintColor;
+                        ctx.fillRect(
+                            Math.floor(col * SZ + panX - SZ),
+                            Math.floor(row * SZ + panY - SZ),
+                            SZ, SZ
+                        );
+                    }
+                }
+            }
         }
-
-        const tip = trail[trail.length - 1];
-        if (tip) {
-            const tipAlpha = Math.max(0, 1 - (now - tip.t) / maxAge);
-            if (tipAlpha > 0) {
-                ctx.beginPath();
-                ctx.arc(tip.x, tip.y, trailPx * 1.6, 0, Math.PI * 2);
-                ctx.fillStyle = this._mousePadColor(Math.min(1, tipAlpha * 1.5));
-                ctx.fill();
+        if (this.mousePadTrail.length > 0) {
+            let eatLastPoint = null;
+            let eatFirstPoint = null;
+            for (let i = this.mousePadTrail.length - 1; i >= 0; i--) { if (this.mousePadTrail[i] !== null) { eatLastPoint = this.mousePadTrail[i]; break; } }
+            for (let i = 0; i < this.mousePadTrail.length; i++) { if (this.mousePadTrail[i] !== null) { eatFirstPoint = this.mousePadTrail[i]; break; } }
+            if (eatLastPoint && eatFirstPoint) {
+                const idleMs = now - eatLastPoint.t;
+                if (maxAge > 0 && idleMs > 0) {
+                    const eatFrac = Math.min(1, idleMs / maxAge);
+                    const actualLen = eatLastPoint.d - eatFirstPoint.d;
+                    const keepFrom = eatLastPoint.d - actualLen * (1 - eatFrac);
+                    while (this.mousePadTrail.length > 1) {
+                        const first = this.mousePadTrail[0];
+                        if (first === null) {
+                            const next = this.mousePadTrail[1];
+                            if (next === null || (next.d !== undefined && next.d < keepFrom)) this.mousePadTrail.shift();
+                            else break;
+                        } else if (first.d !== undefined && first.d < keepFrom) {
+                            this.mousePadTrail.shift();
+                        } else break;
+                    }
+                }
             }
         }
 
-        if (trail.some(p => p !== null && (now - p.t) < maxAge))
+        const trail = this.mousePadTrail;
+        const trailPx = this.MOUSEPAD_TRAIL_PX;
+        const totalLen = trail.length;
+        let lastPoint = null;
+        for (let i = trail.length - 1; i >= 0; i--) { if (trail[i] !== null) { lastPoint = trail[i]; break; } }
+        const noFadeout = maxAge <= 0;
+        const idleFade = noFadeout ? (lastPoint ? 1 : 0) : (lastPoint ? Math.max(0, 1 - (now - lastPoint.t) / maxAge) : 0);
+
+        ctx.save();
+        const catmullRom = (p0, p1, p2, p3, t) => {
+            const t2 = t * t, t3 = t2 * t;
+            return {
+                x: 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3),
+                y: 0.5 * ((2 * p1.y) + (-p0.y + p2.y) * t + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3),
+            };
+        };
+
+        const STEPS = 6;
+        const TAPER_PTS = 12;
+
+        let _dbgStrokes = 0;
+        const drawSmoothedRun = (pts) => {
+            if (pts.length < 2) return;
+            const taperEnd = Math.min(pts.length - 1, TAPER_PTS);
+            const strokeRange = (fromIdx, toIdx, width, color) => {
+                if (toIdx <= fromIdx) return;
+                _dbgStrokes++;
+                ctx.beginPath();
+                const start = catmullRom(pts[Math.max(0, fromIdx - 1)], pts[fromIdx], pts[Math.min(pts.length - 1, fromIdx + 1)], pts[Math.min(pts.length - 1, fromIdx + 2)], 0);
+                ctx.moveTo(start.x, start.y);
+                for (let i = fromIdx; i < toIdx; i++) {
+                    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+                    for (let s = 1; s <= STEPS; s++) { const pt = catmullRom(p0, p1, p2, p3, s / STEPS); ctx.lineTo(pt.x, pt.y); }
+                }
+                ctx.strokeStyle = color;
+                ctx.lineWidth = width;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.stroke();
+            };
+            const taperTotal = taperEnd;
+            for (let i = 0; i < taperEnd; i++) {
+                const isM1 = this.MOUSEPAD_M1_HIGHLIGHT && (pts[i].m1 || pts[i + 1].m1);
+                const baseWidth = trailPx * (isM1 ? 1.5 : 1);
+                const color = isM1 ? this._mousePadColorBright(1) : this._mousePadColor(1);
+                const w = baseWidth * (i + 1) / taperTotal;
+                _dbgStrokes++;
+                const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+                ctx.beginPath();
+                const sp = catmullRom(p0, p1, p2, p3, 0);
+                ctx.moveTo(sp.x, sp.y);
+                for (let s = 1; s <= STEPS; s++) { const pt = catmullRom(p0, p1, p2, p3, s / STEPS); ctx.lineTo(pt.x, pt.y); }
+                ctx.strokeStyle = color;
+                ctx.lineWidth = w;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.stroke();
+            }
+            if (taperEnd < pts.length - 1) {
+                let groupStart = taperEnd;
+                let groupM1 = this.MOUSEPAD_M1_HIGHLIGHT && pts[taperEnd].m1;
+                for (let i = taperEnd + 1; i <= pts.length - 1; i++) {
+                    const m1 = this.MOUSEPAD_M1_HIGHLIGHT && pts[i].m1;
+                    if (m1 !== groupM1 || i === pts.length - 1) {
+                        const bw = trailPx * (groupM1 ? 1.5 : 1);
+                        const col = groupM1 ? this._mousePadColorBright(1) : this._mousePadColor(1);
+                        strokeRange(groupStart, i, bw, col);
+                        groupStart = i;
+                        groupM1 = m1;
+                    }
+                }
+            }
+            const tip = pts[pts.length - 1];
+            const tipM1 = this.MOUSEPAD_M1_HIGHLIGHT && tip.m1;
+            ctx.beginPath();
+            ctx.arc(tip.x, tip.y, trailPx * (tipM1 ? 1.5 : 1) * 1.2, 0, Math.PI * 2);
+            ctx.fillStyle = tipM1 ? this._mousePadColorBright(1) : this._mousePadColor(1);
+            ctx.fill();
+        };
+
+        if (this.MOUSEPAD_MODE === "pan" && totalLen > 0) {
+            const pts = new Array(totalLen);
+            let cx = W / 2, cy = H / 2;
+            pts[totalLen - 1] = { x: cx, y: cy, m1: trail[totalLen - 1].m1, d: trail[totalLen - 1].d };
+            for (let i = totalLen - 2; i >= 0; i--) {
+                const fwd = trail[i + 1];
+                cx -= fwd.dx; cy -= fwd.dy;
+                pts[i] = { x: cx, y: cy, m1: trail[i].m1, d: trail[i].d };
+            }
+            drawSmoothedRun(pts);
+
+        } else {
+            let run = [];
+            for (let i = 0; i < trail.length; i++) {
+                const p = trail[i];
+                if (p === null) { drawSmoothedRun(run); run = []; }
+                else run.push(p);
+            }
+            drawSmoothedRun(run);
+        }
+
+        ctx.restore();
+        const naiveStrokes = Math.max(0, trail.filter(p => p !== null).length - 1);
+        if (this.MOUSEPAD_SHOW_DISTANCE) {
+            const inchesTotal = (this._mousePadTotalDistancePx || 0) / (this.MOUSEPAD_DPI || 400);
+            const cmTotal = inchesTotal * 2.54;
+            let distStr;
+            if (cmTotal >= 100000) distStr = (cmTotal / 100000).toFixed(2) + " km";
+            else if (cmTotal >= 100) distStr = (cmTotal / 100).toFixed(2) + " m";
+            else distStr = cmTotal.toFixed(1) + " cm";
+
+            let fontFamily = "sans-serif";
+            if (this._fontFamilyKey === "custom-b64-font") {
+                fontFamily = '"custom-b64-font", sans-serif';
+            } else if (this._fontFamilyKey) {
+                const el = document.querySelector(".key");
+                if (el) fontFamily = window.getComputedStyle(el).fontFamily || "sans-serif";
+            }
+            const fontSize = Math.max(9, Math.round(Math.min(W, H) * 0.085));
+            ctx.save();
+            ctx.font = `${this.fontWeight || "normal"} ${fontSize}px ${fontFamily}`;
+            ctx.textAlign = "right";
+            ctx.textBaseline = "bottom";
+            const pad = Math.round(fontSize * 0.5);
+            const [ar, ag, ab] = this._activeColorRGB || [139, 92, 246];
+            ctx.fillStyle = `rgba(${ar},${ag},${ab},0.92)`;
+            ctx.fillText(distStr, W - pad, H - pad * 0.55);
+            ctx.restore();
+        }
+
+        const fullyFaded = !noFadeout && lastPoint !== null && (now - lastPoint.t) >= maxAge;
+        if (fullyFaded) this.mousePadTrail = [];
+        if (this.mousePadTrail.length > 0 && this.mousePadTrail.every(p => p === null)) this.mousePadTrail = [];
+        const trailEmpty = this.mousePadTrail.length === 0;
+        const hasLiveTrail = !trailEmpty && (!fullyFaded && (noFadeout ? true : idleFade > 0)) || (this.MOUSEPAD_SHOW_DISTANCE && !trailEmpty);
+
+        if (hasLiveTrail)
             this.mousePadRafId = requestAnimationFrame(this._mousePadRafLoop);
-        else if (this.MOUSEPAD_RECENTER) {
-            this.mousePadCursorX = W / 2;
-            this.mousePadCursorY = H / 2;
+        else {
+            this.mousePadTrail = [];
+            if (this.MOUSEPAD_MODE !== "pan") {
+                this.mousePadCursorX = null;
+                this.mousePadCursorY = null;
+            }
         }
     }
 
@@ -826,6 +1090,16 @@ export class OverlayVisualiser {
         const b = parseInt(hex.slice(4, 6), 16);
         return `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
     }
+
+    _mousePadColorBright(alpha) {
+        //use active font color for trail highlight for now.. glueless i will never touch this again
+        const hex = (this.fontColor || "#ffffff").replace("#", "");
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        return `rgba(${r},${g},${b},${Math.min(1, alpha * 1.2).toFixed(3)})`;
+    }
+
 
     _buildJoystickElement(item) {
         const widthPx = this._parseUClass(item.widthClass, 50);
