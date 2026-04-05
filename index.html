@@ -57,7 +57,7 @@
                     </div>
                     <div class="cfg-field">
                         <label class="cfg-label" for="wsport">port</label>
-                        <input class="cfg-input config-input" id="wsport" type="number" value="16899">
+                        <input class="cfg-input config-input" id="wsport" type="number" value="4455">
                     </div>
                 </div>
                 <div class="cfg-field">
@@ -74,13 +74,13 @@
                 </div>
                 <div class="cfg-row cfg-row--2col cfg-btn-grid" style="margin-top:8px;">
                     <button class="cfg-btn" id="loadbtn">⟳ load url</button>
-                    <button class="cfg-btn cfg-btn--share" id="copysharebtn">⎘ copy to share</button>
+                    <button class="cfg-btn cfg-btn--share" id="copysharebtn">share</button>
                     <button class="cfg-btn cfg-btn--accent" id="copybtn">⎘ copy url</button>
                     <button class="cfg-btn cfg-btn--accent" id="downloadbtn" style="display:none;">⬇ download
                         html</button>
                 </div>
                 <div id="authwarning" class="cfg-auth-warning" style="display:none;">
-                    ⚠ copy url includes your auth token, don't share it publicly. use copy to share instead
+                    ⚠ copy url includes your auth token, don't share it publicly. use share button instead
                 </div>
             </section>
             <div class="cfg-flyouts">
@@ -293,6 +293,18 @@
                     <label class="cfg-accordion-label" for="acc-patchnotes">patch notes</label>
                     <div class="cfg-accordion-content">
                         <div class="cfg-accordion-inner patchnotes">
+                            <h1>2026-04-05</h1>
+                            <h3>ws server</h3>
+                            <ul>
+                                <li>added experimental linux support</li>
+                                <li>changed default port to 4455</li>
+                                <li>better error handling when port is taken</li>
+                                <li>added auto update downloader (only windows for now)</li>
+                            </ul>
+                            <h3>overlay</h3>
+                            <ul>
+                                <li>changed default port to 4455</li>
+                            </ul>
                             <h1>2026-04-03</h1>
                             <h3>ws server</h3>
                             <ul>

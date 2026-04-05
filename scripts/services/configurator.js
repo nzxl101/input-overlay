@@ -48,7 +48,7 @@ export class ConfiguratorMode {
 
     applyDefaultSettings() {
         this.applySettings({
-            wsaddress: "localhost", wsport: "16899",
+            wsaddress: "localhost", wsport: "4455",
             activecolor: "#5cf67d", inactivecolor: "#808080",
             backgroundcolor: "#1a1a1ad1", activebgcolor: "#47bd61",
             outlinecolor: "#4f4f4f", fontcolor: "#ffffff",
@@ -92,7 +92,7 @@ export class ConfiguratorMode {
 
         return {
             wsaddress: val("wsaddress") || "localhost",
-            wsport: val("wsport") || "16899",
+            wsport: val("wsport") || "4455",
             wsauth: val("wsauth"),
             activecolor: val("activecolorhex"),
             inactivecolor: val("inactivecolorhex"),
@@ -246,7 +246,7 @@ export class ConfiguratorMode {
         const safeSettings = { ...settings, wsauth: "" };
         const safeParamsString = this.urlManager.buildURLParams(safeSettings);
         const base = `${window.location.origin}${window.location.pathname}`;
-        const wsParam = `ws=${settings.wsaddress || "localhost"}:${settings.wsport || "16899"}`;
+        const wsParam = `ws=${settings.wsaddress || "localhost"}:${settings.wsport || "4455"}`;
         const linkInput = document.getElementById("generatedlink");
 
         const compressed = this.urlManager.compressSettings(paramsString);
@@ -298,11 +298,11 @@ export class ConfiguratorMode {
             const params = url.searchParams;
             const settings = {};
 
-            let wsAddress = "localhost", wsPort = "16899";
+            let wsAddress = "localhost", wsPort = "4455";
             if (params.has("ws")) {
                 const ws = params.get("ws").split(":");
                 wsAddress = ws[0] || "localhost";
-                wsPort = ws[1] || "16899";
+                wsPort = ws[1] || "4455";
             }
 
             const sourceParams = params.has("cfg")
@@ -514,10 +514,9 @@ export class ConfiguratorMode {
             const paramsString = this.urlManager.buildURLParams(shareSettings);
             const compressed = this.urlManager.compressSettings(paramsString);
             const base = `${window.location.origin}${window.location.pathname}`;
-            const wsParam = `ws=${settings.wsaddress || "localhost"}:${settings.wsport || "16899"}`;
             const shareUrl = compressed
-                ? `${base}?cfg=${compressed}&${wsParam}`
-                : `${base}?${paramsString}&${wsParam}`;
+                ? `${base}?cfg=${compressed}`
+                : `${base}?${paramsString}`;
             try {
                 await navigator.clipboard.writeText(shareUrl);
             } catch {
@@ -528,9 +527,9 @@ export class ConfiguratorMode {
                 document.execCommand("copy");
                 document.body.removeChild(tmp);
             }
-            flashBtn(shareBtn, "copied!", "⎘ copy to share");
+            flashBtn(shareBtn, "copied share link!", "share");
         } catch {
-            flashBtn(shareBtn, "error", "⎘ copy to share");
+            flashBtn(shareBtn, "error", "share");
         }
     }
 
@@ -835,7 +834,7 @@ export class ConfiguratorMode {
             const paramsString = this.urlManager.buildURLParams(settings);
             const compressed = this.urlManager.compressSettings(paramsString);
             const cfgParam = compressed ? `cfg=${compressed}` : paramsString;
-            const wsParam = `ws=${settings.wsaddress || "localhost"}:${settings.wsport || "16899"}`;
+            const wsParam = `ws=${settings.wsaddress || "localhost"}:${settings.wsport || "4455"}`;
             const wsauth = settings.wsauth ? `&wsauth=${encodeURIComponent(settings.wsauth)}` : "";
 
             const base = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, "/");

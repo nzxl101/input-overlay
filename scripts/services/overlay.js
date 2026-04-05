@@ -22,7 +22,7 @@ export class OverlayMode {
             if (!wsOnlyGamepad) {
                 const wsConfig = (this.urlManager.urlParams.get("ws") || "").split(":");
                 const wsAddress = wsConfig[0] || "localhost";
-                const wsPort = wsConfig[1] || "16899";
+                const wsPort = wsConfig[1] || "4455";
                 const wsUrl = `ws://${wsAddress}:${wsPort}/`;
                 const wsAuth = settings.wsauth || "";
 

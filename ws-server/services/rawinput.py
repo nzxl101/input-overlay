@@ -12,6 +12,8 @@ import threading
 import time
 from typing import Callable
 
+from services.consts import RAW_MOUSE_FLUSH_HZ
+
 logger = logging.getLogger(__name__)
 
 WM_INPUT        = 0x00FF
@@ -117,7 +119,7 @@ def _get_raw_input(lParam: int) -> RAWINPUT | None:
 
 
 class RawMouseThread(threading.Thread):
-    FLUSH_HZ = 125
+    FLUSH_HZ = RAW_MOUSE_FLUSH_HZ
 
     def __init__(self, callback: Callable[[int, int], None], min_delta: int = 0, daemon: bool = True):
         super().__init__(daemon=daemon, name="RawMouseThread")
