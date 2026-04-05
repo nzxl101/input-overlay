@@ -2,6 +2,9 @@
 
 A input overlay for OBS and other broadcast software.
 
+> [!NOTE]  
+> hello, this project is pretty much just something i made for myself and a few friends,.. im going to try to fix bug etc as best as i can but keep in mind that im not that skilled of a dev so expect updates to roll out slowly or eventually to stop due to lack of time
+
 ## Features
 
 - **WebSocket connection with authentication** with support to stream your inputs to a secondary PC (for example a dedicated streaming PC)
