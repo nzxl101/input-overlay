@@ -834,7 +834,7 @@ export class OverlayVisualiser {
         if (!this.mousePadRafId) this.mousePadRafId = requestAnimationFrame(this._mousePadRafLoop);
     }
 
-    handleAbsPosition(x, y, penButtons, isNear) {
+    handleAbsPosition(x, y, isNear) {
         if (!this.mousePadCanvas || !this.mousePadCtx) return;
         const W = parseFloat(this.mousePadCanvas.dataset.logicalW) || 0;
         const H = parseFloat(this.mousePadCanvas.dataset.logicalH) || 0;
@@ -846,7 +846,7 @@ export class OverlayVisualiser {
         const canvasY = normY * H;
 
         const now = performance.now();
-        const m1Active = this.MOUSEPAD_M1_HIGHLIGHT && (penButtons & 1);
+        const m1Active = this.MOUSEPAD_M1_HIGHLIGHT;
 
         if (isNear === false) {
             this.mousePadTrail.push(null);

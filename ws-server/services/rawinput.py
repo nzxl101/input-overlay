@@ -342,10 +342,8 @@ class RawMouseThread(threading.Thread):
         abs_y = m.lLastY
         screen_w = _user32.GetSystemMetrics(SM_CXSCREEN)
         screen_h = _user32.GetSystemMetrics(SM_CYSCREEN)
+
         if screen_w > 0 and screen_h > 0:
-            norm_x = abs_x / 65535.0
-            norm_y = abs_y / 65535.0
-        else:
             norm_x = abs_x / 65535.0
             norm_y = abs_y / 65535.0
 

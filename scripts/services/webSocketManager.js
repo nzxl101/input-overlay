@@ -179,7 +179,6 @@ export class WebSocketManager {
                 this.visualizer.handleAbsPosition(
                     event.x ?? 0,
                     event.y ?? 0,
-                    event.pen_buttons ?? 0,
                     event.is_near
                 );
             }
