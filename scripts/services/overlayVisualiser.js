@@ -49,6 +49,7 @@ export class OverlayVisualiser {
         this._absPrevX = null;
         this._absPrevY = null;
         this._absFirstPoint = true;
+        this._absLastTime = null;
 
         this._joystickCanvases = {};
         this._joystickRafLoops = {};
@@ -846,17 +847,24 @@ export class OverlayVisualiser {
         const canvasY = normY * H;
 
         const now = performance.now();
-        const m1Active = this.MOUSEPAD_M1_HIGHLIGHT;
-
+        
         if (isNear === false) {
             this.mousePadTrail.push(null);
             this._absFirstPoint = true;
+            this._absLastTime = null;
             if (this.MOUSEPAD_SHOW_DISTANCE) {
                 this._mousePadTotalDistancePx = 0;
             }
             if (!this.mousePadRafId) this.mousePadRafId = requestAnimationFrame(this._mousePadRafLoop);
             return;
         }
+
+        if (this._absLastTime && now - this._absLastTime < 5) {
+            return;
+        }
+        this._absLastTime = now;
+
+        const m1Active = this.MOUSEPAD_M1_HIGHLIGHT && this.activeMouseButtons.has("mouse_left");
 
         if (this.mousePadCursorX === null) {
             this.mousePadCursorX = canvasX;
